@@ -1,0 +1,54 @@
+version: "2"
+
+run:
+  timeout: 2m
+  tests: false
+
+linters:
+  enable:
+    - govet
+    - staticcheck
+    - revive
+    - errcheck
+    - depguard
+
+issues:
+  exclude:
+    - "Error return value of .((os\\.)?Std(out|err)|log\\.(Fatal|Print.*)) is not checked"
+
+linters-settings:
+  revive:
+    config: |
+      ignoreGeneratedHeader: true
+      severity: warning
+      rules:
+        - name: var-naming
+          arguments:
+            allow-leading-underscore: true
+
+  depguard:
+    rules:
+      Default:
+        allow:
+          - $gostd
+          - github.com/jackc/pgx
+          - github.com/jackc/pgx/v5/pgxpool
+          - github.com/jackc/pgx/v5/stdlib
+        deny:
+          - github.com/pkg/errors
+        deny-message: "Should be replaced by standard lib errors package"
+    list-type: blacklist
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+
+formatters-settings:
+  gofmt:
+    simplify: true
+
+output:
+  format: colored-line-number
+  print-issued-lines: true
+  uniq-by-line: true

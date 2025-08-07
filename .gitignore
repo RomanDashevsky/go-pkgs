@@ -58,3 +58,7 @@ bin/
 # Coverage files
 coverage.out
 coverage.html
+
+# Lefthook
+.lefthook/
+lefthook-local.yml

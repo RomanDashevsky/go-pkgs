@@ -1,0 +1,54 @@
+pre-commit:
+  parallel: true
+  commands:
+    fmt:
+      glob: "*.go"
+      run: go fmt {staged_files}
+      stage_fixed: true
+      
+    lint:
+      glob: "*.go"
+      run: golangci-lint run --fix {staged_files}
+      stage_fixed: true
+      
+    imports:
+      glob: "*.go"
+      run: goimports -w {staged_files}
+      stage_fixed: true
+
+pre-push:
+  parallel: false
+  commands:
+    lint-all:
+      run: golangci-lint run
+      
+    test:
+      run: go test -race ./...
+      
+    build:
+      run: go build -v -race -trimpath ./...
+
+commit-msg:
+  commands:
+    validate:
+      run: |
+        # Check commit message format
+        commit_regex='^(feat|fix|docs|style|refactor|test|chore|build|ci)(\(.+\))?: .{1,72}$'
+        commit_msg=$(cat {1})
+        
+        if ! echo "$commit_msg" | grep -qE "$commit_regex"; then
+          echo "❌ Commit message format is invalid!"
+          echo ""
+          echo "Your message: '$commit_msg'"
+          echo ""
+          echo "Valid format: <type>(<scope>): <subject>  OR  <type>: <subject>"
+          echo ""
+          echo "Examples:"
+          echo "  ✅ feat: add githooks support"
+          echo "  ✅ feat(lefthook): add githooks configuration" 
+          echo "  ✅ fix: correct import paths"
+          echo "  ✅ docs(readme): update installation instructions"
+          echo ""
+          echo "Types: feat, fix, docs, style, refactor, test, chore, build, ci"
+          exit 1
+        fi
