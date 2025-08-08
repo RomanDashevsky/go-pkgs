@@ -1,0 +1,23 @@
+run:
+  timeout: 2m
+  tests: false
+
+linters:
+  enable:
+    - govet
+    - staticcheck
+    - errcheck
+
+issues:
+  exclude:
+    - "Error return value of .((os\\.)?Std(out|err)|log\\.(Fatal|Print.*)) is not checked"
+    - "type name will be used as logger.LoggerI by other packages, and that stutters; consider calling this I"
+
+linters-settings:
+  revive:
+    rules:
+      - name: exported
+        disabled: true
+      - name: var-naming
+        arguments:
+          - ["ID", "JSON", "HTTP", "URL", "UUID", "URI", "API", "TTL"]
