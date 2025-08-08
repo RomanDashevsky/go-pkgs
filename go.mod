@@ -6,7 +6,7 @@ toolchain go1.24.5
 
 require (
 	github.com/Masterminds/squirrel v1.5.4
-	github.com/goccy/go-json v0.10.2
+	github.com/goccy/go-json v0.10.5
 	github.com/gofiber/fiber/v2 v2.51.0
 	github.com/jackc/pgx/v5 v5.7.5
 	github.com/pressly/goose/v3 v3.15.0
