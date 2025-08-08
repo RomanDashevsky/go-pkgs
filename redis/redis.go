@@ -4,12 +4,13 @@ package redis
 
 import (
 	"context"
-	"github.com/redis/go-redis/v9"
 	"log"
 	"time"
+
+	"github.com/redis/go-redis/v9"
 )
 
-const defaultTtl = 2 * time.Minute
+const defaultTTL = 2 * time.Minute
 
 // Redis represents a Redis client with configurable default TTL.
 type Redis struct {
@@ -27,7 +28,7 @@ type Redis struct {
 //	)
 func New(address string, user string, password string, opts ...Options) (*Redis, error) {
 	r := &Redis{
-		ttl: defaultTtl,
+		ttl: defaultTTL,
 	}
 
 	for _, opt := range opts {

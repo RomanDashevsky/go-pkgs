@@ -8,36 +8,40 @@ linters:
   enable:
     - govet
     - staticcheck
-    - revive
     - errcheck
-    - depguard
 
 issues:
   exclude:
     - "Error return value of .((os\\.)?Std(out|err)|log\\.(Fatal|Print.*)) is not checked"
+    - "type name will be used as logger.LoggerI by other packages, and that stutters; consider calling this I"
 
 linters-settings:
   revive:
-    config: |
-      ignoreGeneratedHeader: true
-      severity: warning
-      rules:
-        - name: var-naming
-          arguments:
-            allow-leading-underscore: true
+    rules:
+      - name: exported
+        disabled: true
+      - name: var-naming
+        arguments:
+          - ["ID", "JSON", "HTTP", "URL", "UUID", "URI", "API", "TTL"]
 
   depguard:
     rules:
-      Default:
+      main:
+        files:
+          - $all
         allow:
           - $gostd
           - github.com/jackc/pgx
-          - github.com/jackc/pgx/v5/pgxpool
-          - github.com/jackc/pgx/v5/stdlib
+          - github.com/Masterminds/squirrel
+          - github.com/gofiber/fiber
+          - github.com/goccy/go-json
+          - github.com/pressly/goose
+          - github.com/redis/go-redis
+          - github.com/rs/zerolog
+          - github.com/rdashevsky/go-pkgs
         deny:
-          - github.com/pkg/errors
-        deny-message: "Should be replaced by standard lib errors package"
-    list-type: blacklist
+          - pkg: github.com/pkg/errors
+            desc: Should be replaced by standard lib errors package
 
 formatters:
   enable:

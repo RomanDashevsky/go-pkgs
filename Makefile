@@ -69,6 +69,77 @@ hooks-run: ## Run all hooks manually
 	@echo "Running all hooks..."
 	@lefthook run pre-commit
 
+# CI/CD workflow
+ci: fmt lint test build security-check ## Run CI checks
+	@echo "CI checks passed!"
+
+security-check: ## Run security checks
+	@echo "Running security checks..."
+	@command -v govulncheck >/dev/null 2>&1 || { echo "Installing govulncheck..."; go install golang.org/x/vuln/cmd/govulncheck@latest; }
+	govulncheck ./...
+	@echo "Security checks passed!"
+
+integration-test: ## Run integration tests (requires services)
+	@echo "Running integration tests..."
+	@if [ "$$INTEGRATION_TESTS" = "true" ]; then \
+		go test -v -race -tags=integration ./...; \
+	else \
+		echo "Skipping integration tests (set INTEGRATION_TESTS=true to run)"; \
+	fi
+
+benchmark: ## Run benchmarks
+	@echo "Running benchmarks..."
+	go test -bench=. -benchmem ./...
+
+profile-cpu: ## Run CPU profiling
+	@echo "Running CPU profiling..."
+	go test -cpuprofile=cpu.prof -bench=. ./...
+	@echo "Profile saved to cpu.prof"
+
+profile-mem: ## Run memory profiling
+	@echo "Running memory profiling..."
+	go test -memprofile=mem.prof -bench=. ./...
+	@echo "Profile saved to mem.prof"
+
 # Release workflow  
-pre-release: fmt lint test build ## Pre-release checks
+pre-release: fmt lint test build security-check ## Pre-release checks
 	@echo "Ready for release!"
+
+# Documentation
+docs-serve: ## Serve documentation locally
+	@echo "Serving documentation..."
+	@command -v godoc >/dev/null 2>&1 || { echo "Installing godoc..."; go install golang.org/x/tools/cmd/godoc@latest; }
+	@echo "Documentation available at http://localhost:6060/pkg/github.com/rdashevsky/go-pkgs/"
+	godoc -http=:6060
+
+# Docker support
+docker-build: ## Build Docker image for testing
+	@echo "Building Docker image..."
+	docker build -f .github/Dockerfile -t go-pkgs:test .
+
+docker-test: ## Run tests in Docker container
+	@echo "Running tests in Docker..."
+	docker run --rm -v $(PWD):/app -w /app golang:1.23-alpine go test -v ./...
+
+# Tools installation
+install-tools: ## Install all required development tools
+	@echo "Installing development tools..."
+	go install golang.org/x/tools/cmd/goimports@latest
+	go install golang.org/x/vuln/cmd/govulncheck@latest
+	go install github.com/evilmartians/lefthook@latest
+	go install golang.org/x/tools/cmd/godoc@latest
+	@echo "All tools installed!"
+
+update-deps: ## Update dependencies
+	@echo "Updating dependencies..."
+	go get -u ./...
+	go mod tidy
+	@echo "Dependencies updated!"
+
+mod-graph: ## Show module dependency graph
+	@echo "Module dependency graph:"
+	go mod graph
+
+mod-why: ## Show why packages are needed
+	@echo "Checking why packages are needed..."
+	@read -p "Enter package name: " package; go mod why $$package

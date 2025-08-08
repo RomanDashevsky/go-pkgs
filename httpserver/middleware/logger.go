@@ -1,9 +1,12 @@
+// Package middleware provides HTTP middleware for Fiber applications.
+// It includes logging, recovery, and other common middleware functionality.
 package middleware
 
 import (
-	"github.com/rdashevsky/go-pkgs/logger"
 	"strconv"
 	"strings"
+
+	"github.com/rdashevsky/go-pkgs/logger"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -24,6 +27,8 @@ func buildRequestMessage(ctx *fiber.Ctx) string {
 	return result.String()
 }
 
+// Logger returns a Fiber middleware that logs HTTP requests.
+// It logs the client IP, method, URL, status code, and response body size for each request.
 func Logger(l logger.LoggerI) func(c *fiber.Ctx) error {
 	return func(ctx *fiber.Ctx) error {
 		err := ctx.Next()

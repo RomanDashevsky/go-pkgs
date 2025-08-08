@@ -3,13 +3,11 @@ pre-commit:
   commands:
     fmt:
       glob: "*.go"
-      run: go fmt {staged_files}
-      stage_fixed: true
+      run: go fmt ./...
       
     lint:
       glob: "*.go"
-      run: golangci-lint run --fix {staged_files}
-      stage_fixed: true
+      run: golangci-lint run --fix
       
     imports:
       glob: "*.go"

@@ -4,9 +4,10 @@ package logger
 
 import (
 	"fmt"
-	"github.com/rs/zerolog"
 	"os"
 	"strings"
+
+	"github.com/rs/zerolog"
 )
 
 // LoggerI defines the interface for structured logging with different levels.
@@ -63,14 +64,17 @@ func New(level string) *Logger {
 	}
 }
 
+// Debug logs a debug-level message with optional formatting arguments.
 func (l *Logger) Debug(message interface{}, args ...interface{}) {
 	l.msg("debug", message, args...)
 }
 
+// Info logs an info-level message with optional formatting arguments.
 func (l *Logger) Info(message string, args ...interface{}) {
 	l.log(message, args...)
 }
 
+// Warn logs a warning-level message with optional formatting arguments.
 func (l *Logger) Warn(message string, args ...interface{}) {
 	l.log(message, args...)
 }
@@ -83,6 +87,7 @@ func (l *Logger) Error(message interface{}, args ...interface{}) {
 	l.msg("error", message, args...)
 }
 
+// Fatal logs a fatal-level message with optional formatting arguments.
 func (l *Logger) Fatal(message interface{}, args ...interface{}) {
 	l.msg("fatal", message, args...)
 

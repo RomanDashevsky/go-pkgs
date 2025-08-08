@@ -1,0 +1,190 @@
+name: Dependencies
+
+on:
+  schedule:
+    # Run dependency updates weekly on Monday at 9 AM UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  update-dependencies:
+    name: Update Dependencies
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.23'
+
+    - name: Update Go modules
+      run: |
+        go get -u ./...
+        go mod tidy
+        go mod verify
+
+    - name: Run tests after update
+      run: go test -race ./...
+
+    - name: Run linter after update
+      uses: golangci/golangci-lint-action@v6
+      with:
+        version: latest
+        args: --timeout=5m
+
+    - name: Check for changes
+      id: changes
+      run: |
+        if git diff --quiet go.mod go.sum; then
+          echo "No dependency updates available"
+          echo "has_changes=false" >> $GITHUB_OUTPUT
+        else
+          echo "Dependencies updated"
+          echo "has_changes=true" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Create Pull Request
+      if: steps.changes.outputs.has_changes == 'true'
+      uses: peter-evans/create-pull-request@v6
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        commit-message: 'chore: update Go dependencies'
+        title: 'chore: automated dependency update'
+        body: |
+          ## Automated Dependency Update
+
+          This PR updates Go dependencies to their latest versions.
+
+          ### Changes
+          - Updated go.mod and go.sum files
+          - All tests passing
+          - Linter checks passed
+
+          ### Verification
+          - [x] Tests pass
+          - [x] Linter passes
+          - [x] Dependencies verified
+
+          **Note**: This is an automated PR. Please review the changes before merging.
+        branch: chore/update-dependencies
+        delete-branch: true
+        reviewers: rdashevsky
+        assignees: rdashevsky
+
+  check-outdated:
+    name: Check Outdated Dependencies  
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.23'
+
+    - name: Install go-mod-outdated
+      run: go install github.com/psampaz/go-mod-outdated@latest
+
+    - name: Check outdated dependencies
+      run: |
+        echo "## Outdated Dependencies Report" > outdated-report.md
+        echo "" >> outdated-report.md
+        go list -u -m -json all | go-mod-outdated -update -direct >> outdated-report.md || true
+
+    - name: Upload outdated report
+      uses: actions/upload-artifact@v4
+      with:
+        name: outdated-dependencies-report
+        path: outdated-report.md
+
+    - name: Create issue for outdated dependencies
+      if: github.event_name == 'schedule'
+      uses: peter-evans/create-issue-from-file@v5
+      with:
+        title: 'Weekly Outdated Dependencies Report'
+        content-filepath: outdated-report.md
+        labels: |
+          dependencies
+          maintenance
+        assignees: rdashevsky
+
+  check-vulnerabilities:
+    name: Check Vulnerabilities
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go  
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.23'
+
+    - name: Download dependencies
+      run: go mod download
+
+    - name: Install govulncheck
+      run: go install golang.org/x/vuln/cmd/govulncheck@latest
+
+    - name: Run vulnerability check
+      id: vuln-check
+      run: |
+        if govulncheck ./...; then
+          echo "vulnerability_found=false" >> $GITHUB_OUTPUT
+        else
+          echo "vulnerability_found=true" >> $GITHUB_OUTPUT
+        fi
+      continue-on-error: true
+
+    - name: Create security issue
+      if: steps.vuln-check.outputs.vulnerability_found == 'true'
+      uses: peter-evans/create-issue-from-file@v5
+      with:
+        title: '🚨 Security Vulnerabilities Detected'
+        content-filepath: |
+          ## Security Vulnerabilities Found
+          
+          Automated security scan has detected vulnerabilities in the project dependencies.
+          
+          **Action Required**: Please review and update the affected dependencies.
+          
+          Run `govulncheck ./...` locally for detailed information.
+        labels: |
+          security
+          critical
+          dependencies
+        assignees: rdashevsky
+
+  go-version-matrix:
+    name: Test Go Version Compatibility
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go-version: ['1.21', '1.22', '1.23']
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go ${{ matrix.go-version }}
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ matrix.go-version }}
+
+    - name: Download dependencies
+      run: go mod download
+
+    - name: Test with Go ${{ matrix.go-version }}
+      run: go test -v ./...
+
+    - name: Build with Go ${{ matrix.go-version }}
+      run: go build -v ./...

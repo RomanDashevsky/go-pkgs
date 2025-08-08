@@ -1,10 +1,14 @@
+// Package response provides utilities for HTTP response handling in Fiber applications.
+// It includes standardized error responses and response formatting functionality.
 package response
 
 import (
-	"github.com/gofiber/fiber/v2"
 	"strconv"
+
+	"github.com/gofiber/fiber/v2"
 )
 
+// Option defines a function type for configuring ErrorResponse instances.
 type Option func(*ErrorResponse)
 
 // ErrorMessage -.
@@ -21,6 +25,9 @@ func ErrorTitle(title string) Option {
 	}
 }
 
+// Error sends a standardized JSON error response with the given HTTP status code.
+// It automatically maps common status codes to appropriate error titles and allows
+// customization through optional parameters.
 func Error(ctx *fiber.Ctx, code int, opts ...Option) error {
 	title, ok := statusCodeErrorTitle[code]
 	var errResponse ErrorResponse
@@ -38,6 +45,7 @@ func Error(ctx *fiber.Ctx, code int, opts ...Option) error {
 	return ctx.Status(code).JSON(errResponse)
 }
 
+// ErrorResponse represents a standardized JSON error response structure.
 type ErrorResponse struct {
 	Error   string  `json:"error" example:"Not found"`
 	Message *string `json:"message,omitempty" example:"Some error details"`
