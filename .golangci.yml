@@ -1,4 +1,4 @@
-version: "2"
+version: 2
 
 run:
   timeout: 2m
@@ -24,35 +24,6 @@ linters-settings:
         arguments:
           - ["ID", "JSON", "HTTP", "URL", "UUID", "URI", "API", "TTL"]
 
-  depguard:
-    rules:
-      main:
-        files:
-          - $all
-        allow:
-          - $gostd
-          - github.com/jackc/pgx
-          - github.com/Masterminds/squirrel
-          - github.com/gofiber/fiber
-          - github.com/goccy/go-json
-          - github.com/pressly/goose
-          - github.com/redis/go-redis
-          - github.com/rs/zerolog
-          - github.com/rdashevsky/go-pkgs
-        deny:
-          - pkg: github.com/pkg/errors
-            desc: Should be replaced by standard lib errors package
-
-formatters:
-  enable:
-    - gofmt
-    - goimports
-
-formatters-settings:
-  gofmt:
-    simplify: true
-
 output:
   format: colored-line-number
   print-issued-lines: true
-  uniq-by-line: true
