@@ -23,7 +23,3 @@ linters-settings:
       - name: var-naming
         arguments:
           - ["ID", "JSON", "HTTP", "URL", "UUID", "URI", "API", "TTL"]
-
-output:
-  format: colored-line-number
-  print-issued-lines: true
