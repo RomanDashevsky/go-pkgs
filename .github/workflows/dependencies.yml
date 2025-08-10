@@ -21,7 +21,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: '1.24.6'
+        go-version: '1.23'
 
     - name: Update Go modules
       run: |
@@ -88,7 +88,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: '1.24.6'
+        go-version: '1.23'
 
     - name: Install go-mod-outdated
       run: go install github.com/psampaz/go-mod-outdated@latest
@@ -127,7 +127,7 @@ jobs:
     - name: Set up Go  
       uses: actions/setup-go@v5
       with:
-        go-version: '1.24.6'
+        go-version: '1.23'
 
     - name: Download dependencies
       run: go mod download
