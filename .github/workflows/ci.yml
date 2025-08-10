@@ -204,7 +204,13 @@ jobs:
     - name: Check for unused dependencies
       run: |
         go mod tidy -v
-        git diff --exit-code go.mod go.sum
+        if git diff --exit-code go.mod go.sum; then
+          echo "✅ No dependency changes needed"
+        else
+          echo "⚠️ Dependencies were updated by go mod tidy"
+          echo "Please run 'go mod tidy' locally and commit the changes"
+          exit 1
+        fi
 
   integration:
     name: Integration Tests
