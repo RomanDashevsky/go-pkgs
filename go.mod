@@ -1,6 +1,6 @@
 module github.com/rdashevsky/go-pkgs
 
-go 1.23.0
+go 1.23.12
 
 require (
 	github.com/Masterminds/squirrel v1.5.4

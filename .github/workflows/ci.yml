@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        go-version: ['1.21', '1.22', '1.23']
+        go-version: ['1.21', '1.22', '1.23.12']
     
     services:
       postgres:
@@ -91,7 +91,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: '1.23'
+        go-version: '1.23.12'
 
     - name: Cache Go modules
       uses: actions/cache@v4
@@ -125,7 +125,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        go-version: ['1.21', '1.22', '1.23']
+        go-version: ['1.21', '1.22', '1.23.12']
     
     steps:
     - name: Checkout code
@@ -166,7 +166,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: '1.23'
+        go-version: '1.23.12'
 
     - name: Run Gosec Security Scanner
       uses: securego/gosec@master
@@ -189,7 +189,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: '1.23'
+        go-version: '1.23.12'
 
     - name: Check for outdated dependencies
       run: |
@@ -245,7 +245,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: '1.23'
+        go-version: '1.23.12'
 
     - name: Download dependencies
       run: go mod download
@@ -291,7 +291,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: '1.23'
+        go-version: '1.23.12'
 
     - name: Generate changelog
       id: changelog
