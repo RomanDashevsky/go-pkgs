@@ -190,41 +190,55 @@ func TestServer_MultipleOptions(t *testing.T) {
 	}
 }
 
-// Example demonstrates creating and using an HTTP server
-func Example() {
-	// Create server with options
-	server := httpserver.New(
-		httpserver.Port(":8080"),
-		httpserver.ReadTimeout(10*time.Second),
-		httpserver.WriteTimeout(10*time.Second),
-	)
-
-	// Add routes
-	server.App.Get("/", func(c *fiber.Ctx) error {
-		return c.SendString("Hello, World!")
-	})
-
-	// Start server
-	server.Start()
-
-	// Wait for shutdown signal
-	<-server.Notify()
-}
-
-// BenchmarkNew benchmarks server creation
-func BenchmarkNew(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		_ = httpserver.New()
+func TestServer_NilApp(t *testing.T) {
+	// Test edge case to ensure robust error handling
+	server := httpserver.New()
+	if server.App == nil {
+		t.Error("expected server.App to be initialized")
 	}
 }
 
-// BenchmarkNewWithOptions benchmarks server creation with options
-func BenchmarkNewWithOptions(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		_ = httpserver.New(
-			httpserver.Port(":8080"),
-			httpserver.ReadTimeout(10*time.Second),
-			httpserver.WriteTimeout(10*time.Second),
-		)
+func TestServer_ConfigDefaults(t *testing.T) {
+	server := httpserver.New()
+	config := server.App.Config()
+
+	// Test that defaults are applied correctly
+	expectedReadTimeout := 5 * time.Second
+	expectedWriteTimeout := 5 * time.Second
+
+	if config.ReadTimeout != expectedReadTimeout {
+		t.Errorf("expected default ReadTimeout %v, got %v", expectedReadTimeout, config.ReadTimeout)
 	}
+	if config.WriteTimeout != expectedWriteTimeout {
+		t.Errorf("expected default WriteTimeout %v, got %v", expectedWriteTimeout, config.WriteTimeout)
+	}
+	if config.Prefork != false {
+		t.Error("expected default Prefork to be false")
+	}
+}
+
+func TestServer_ConcurrentAccess(t *testing.T) {
+	server := httpserver.New(httpserver.Port(":0"))
+
+	// Test concurrent access to server methods
+	done := make(chan bool, 2)
+
+	go func() {
+		notify := server.Notify()
+		if notify == nil {
+			t.Error("expected notify channel to exist")
+		}
+		done <- true
+	}()
+
+	go func() {
+		if server.App == nil {
+			t.Error("expected server.App to exist")
+		}
+		done <- true
+	}()
+
+	// Wait for both goroutines
+	<-done
+	<-done
 }
