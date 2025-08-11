@@ -8,99 +8,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rdashevsky/go-pkgs/goose"
-	"github.com/rdashevsky/go-pkgs/logger"
 )
-
-// mockLogger implements logger.LoggerI for testing
-type mockLogger struct {
-	logs []logEntry
-}
-
-type logEntry struct {
-	level   string
-	message string
-}
-
-func (m *mockLogger) Debug(message interface{}, args ...interface{}) {
-	m.logs = append(m.logs, logEntry{
-		level:   "DEBUG",
-		message: fmt.Sprintf("%v", message),
-	})
-}
-
-func (m *mockLogger) Info(message string, args ...interface{}) {
-	formatted := fmt.Sprintf(message, args...)
-	m.logs = append(m.logs, logEntry{
-		level:   "INFO",
-		message: formatted,
-	})
-}
-
-func (m *mockLogger) Warn(message string, args ...interface{}) {
-	formatted := fmt.Sprintf(message, args...)
-	m.logs = append(m.logs, logEntry{
-		level:   "WARN",
-		message: formatted,
-	})
-}
-
-func (m *mockLogger) Error(message interface{}, args ...interface{}) {
-	var formatted string
-	if len(args) > 0 {
-		formatted = fmt.Sprintf("%v", message)
-		for _, arg := range args {
-			formatted += fmt.Sprintf(" %v", arg)
-		}
-	} else {
-		switch msg := message.(type) {
-		case string:
-			formatted = msg
-		case error:
-			formatted = msg.Error()
-		default:
-			formatted = fmt.Sprintf("%v", message)
-		}
-	}
-
-	m.logs = append(m.logs, logEntry{
-		level:   "ERROR",
-		message: formatted,
-	})
-}
-
-func (m *mockLogger) Fatal(message interface{}, args ...interface{}) {
-	var formatted string
-	if len(args) > 0 {
-		formatted = fmt.Sprintf("%v", message)
-		for _, arg := range args {
-			formatted += fmt.Sprintf(" %v", arg)
-		}
-	} else {
-		switch msg := message.(type) {
-		case string:
-			formatted = msg
-		case error:
-			formatted = msg.Error()
-		default:
-			formatted = fmt.Sprintf("%v", message)
-		}
-	}
-
-	m.logs = append(m.logs, logEntry{
-		level:   "FATAL",
-		message: formatted,
-	})
-}
-
-func (m *mockLogger) getLogsByLevel(level string) []string {
-	var messages []string
-	for _, log := range m.logs {
-		if log.level == level {
-			messages = append(messages, log.message)
-		}
-	}
-	return messages
-}
 
 func TestCheckMigrationStatus_NoDatabase(t *testing.T) {
 	// Test with a pool that will fail to connect
@@ -314,62 +222,6 @@ func TestGooseIntegration_DatabaseVersionCheck(t *testing.T) {
 	*/
 }
 
-// Example demonstrates using the CheckMigrationStatus function
-func Example() {
-	// Create a PostgreSQL connection pool
-	config, err := pgxpool.ParseConfig("postgres://user:password@localhost:5432/database?sslmode=disable")
-	if err != nil {
-		panic(err)
-	}
-
-	pool, err := pgxpool.NewWithConfig(context.Background(), config)
-	if err != nil {
-		panic(err)
-	}
-	defer pool.Close()
-
-	// Create a logger
-	log := logger.New("info")
-
-	// Check if database is at expected migration version
-	expectedVersion := int64(10)
-	currentVersion, err := goose.CheckMigrationStatus(pool, expectedVersion, log)
-	if err != nil {
-		fmt.Printf("Migration check failed: %v\n", err)
-		fmt.Printf("Current version: %d, Expected: %d\n", currentVersion, expectedVersion)
-		return
-	}
-
-	fmt.Printf("Database is up to date at version %d\n", currentVersion)
-}
-
-// BenchmarkCheckMigrationStatus benchmarks the migration status check
-func BenchmarkCheckMigrationStatus(b *testing.B) {
-	// This benchmark would fail without a real database, but shows the structure
-	b.Skip("Benchmark requires real PostgreSQL database")
-
-	/*
-		config, err := pgxpool.ParseConfig("postgres://user:pass@localhost:5432/testdb")
-		if err != nil {
-			b.Fatalf("failed to parse config: %v", err)
-		}
-
-		pool, err := pgxpool.NewWithConfig(context.Background(), config)
-		if err != nil {
-			b.Fatalf("failed to create pool: %v", err)
-		}
-		defer pool.Close()
-
-		log := logger.New("error") // Use error level to minimize logging overhead
-		expectedVersion := int64(1)
-
-		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
-			_, _ = goose.CheckMigrationStatus(pool, expectedVersion, log)
-		}
-	*/
-}
-
 // TestMockLogger verifies our mock logger implementation works correctly
 func TestMockLogger(t *testing.T) {
 	mockLog := &mockLogger{}
@@ -392,5 +244,117 @@ func TestMockLogger(t *testing.T) {
 	infoLogs := mockLog.getLogsByLevel("INFO")
 	if len(infoLogs) != 1 || infoLogs[0] != "info message with arg: 42" {
 		t.Errorf("info log not formatted correctly: %v", infoLogs)
+	}
+}
+
+// TestMockLogger_ErrorHandling tests error handling in mock logger
+func TestMockLogger_ErrorHandling(t *testing.T) {
+	mockLog := &mockLogger{}
+
+	// Test error with different types
+	testErr := fmt.Errorf("test error")
+	mockLog.Error(testErr)
+	mockLog.Error("string error", "arg1", "arg2")
+	mockLog.Error(42)
+
+	errorLogs := mockLog.getLogsByLevel("ERROR")
+	if len(errorLogs) != 3 {
+		t.Errorf("expected 3 error logs, got %d", len(errorLogs))
+	}
+
+	if errorLogs[0] != "test error" {
+		t.Errorf("expected 'test error', got '%s'", errorLogs[0])
+	}
+
+	if errorLogs[1] != "string error arg1 arg2" {
+		t.Errorf("expected 'string error arg1 arg2', got '%s'", errorLogs[1])
+	}
+
+	if errorLogs[2] != "42" {
+		t.Errorf("expected '42', got '%s'", errorLogs[2])
+	}
+}
+
+// TestMockLogger_FatalHandling tests fatal handling in mock logger
+func TestMockLogger_FatalHandling(t *testing.T) {
+	mockLog := &mockLogger{}
+
+	// Test fatal with different types
+	testErr := fmt.Errorf("fatal error")
+	mockLog.Fatal(testErr)
+	mockLog.Fatal("string fatal", "arg1")
+	mockLog.Fatal(404)
+
+	fatalLogs := mockLog.getLogsByLevel("FATAL")
+	if len(fatalLogs) != 3 {
+		t.Errorf("expected 3 fatal logs, got %d", len(fatalLogs))
+	}
+
+	if fatalLogs[0] != "fatal error" {
+		t.Errorf("expected 'fatal error', got '%s'", fatalLogs[0])
+	}
+}
+
+// TestCheckMigrationStatus_EdgeCases tests edge cases for CheckMigrationStatus
+func TestCheckMigrationStatus_EdgeCases(t *testing.T) {
+	tests := []struct {
+		name            string
+		dsn             string
+		expectedVersion int64
+		timeout         time.Duration
+	}{
+		{
+			name:            "zero expected version",
+			dsn:             "postgres://test:test@127.0.0.1:65432/testdb",
+			expectedVersion: 0,
+			timeout:         100 * time.Millisecond,
+		},
+		{
+			name:            "negative expected version",
+			dsn:             "postgres://test:test@127.0.0.1:65432/testdb",
+			expectedVersion: -1,
+			timeout:         100 * time.Millisecond,
+		},
+		{
+			name:            "large expected version",
+			dsn:             "postgres://test:test@127.0.0.1:65432/testdb",
+			expectedVersion: 999999,
+			timeout:         100 * time.Millisecond,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			config, err := pgxpool.ParseConfig(tt.dsn)
+			if err != nil {
+				t.Fatalf("failed to parse config: %v", err)
+			}
+
+			config.MaxConns = 1
+			config.ConnConfig.ConnectTimeout = tt.timeout
+
+			ctx, cancel := context.WithTimeout(context.Background(), tt.timeout*2)
+			defer cancel()
+
+			pool, err := pgxpool.NewWithConfig(ctx, config)
+			if err != nil {
+				t.Skip("failed to create pool - expected in test environment")
+			}
+			defer pool.Close()
+
+			mockLog := &mockLogger{}
+
+			// Should fail due to connection issues in test environment
+			version, err := goose.CheckMigrationStatus(pool, tt.expectedVersion, mockLog)
+
+			// All these should fail with connection error and return 0
+			if err == nil {
+				t.Skip("unexpected successful connection to database")
+			}
+
+			if version != 0 {
+				t.Errorf("expected version 0 on connection error, got %d", version)
+			}
+		})
 	}
 }

@@ -65,17 +65,3 @@ type testError struct {
 func (e *testError) Error() string {
 	return e.msg
 }
-
-// BenchmarkLoggerCreation benchmarks logger creation
-func BenchmarkLoggerCreation(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		_ = logger.New("info")
-	}
-}
-
-// ExampleNew shows how to create a new logger
-func ExampleNew() {
-	l := logger.New("info")
-	l.Info("Application started")
-	// Output will include timestamp and caller information
-}

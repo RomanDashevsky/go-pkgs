@@ -225,67 +225,101 @@ func TestPostgres_MultipleOptions(t *testing.T) {
 	_ = err // Don't check error - connection outcome varies by environment
 }
 
-// Example demonstrates creating and using a PostgreSQL connection
-func Example() {
-	// Create connection with options
-	pg, err := postgres.New(
-		"postgres://user:password@localhost:5432/database",
-		postgres.MaxPoolSize(10),
-		postgres.ConnAttempts(3),
-	)
-	if err != nil {
-		panic(err)
-	}
-	defer pg.Close()
-
-	// Use Squirrel query builder
-	query, args, err := pg.Builder.
-		Select("id, name, email").
-		From("users").
-		Where(squirrel.Eq{"active": true}).
-		OrderBy("created_at DESC").
-		Limit(10).
-		ToSql()
-	if err != nil {
-		panic(err)
-	}
-
-	// Execute query (would need actual database)
-	_ = query
-	_ = args
-	// rows, err := pg.Pool.Query(context.Background(), query, args...)
-}
-
-// BenchmarkSquirrelQueryBuilding benchmarks Squirrel query building
-func BenchmarkSquirrelQueryBuilding(b *testing.B) {
+func TestPostgres_SquirrelBuilderComplexSelect(t *testing.T) {
 	pg := &postgres.Postgres{}
 	pg.Builder = squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_, _, err := pg.Builder.
-			Select("id, name, email, created_at").
-			From("users").
-			Where(squirrel.Eq{"active": true}).
-			Where("created_at > ?", time.Now().Add(-24*time.Hour)).
-			OrderBy("created_at DESC").
-			Limit(50).
-			ToSql()
-		if err != nil {
-			b.Fatal(err)
-		}
+	// Test complex SELECT with JOINs and subqueries
+	query, args, err := pg.Builder.
+		Select("u.id", "u.name", "p.title", "COUNT(c.id) as comment_count").
+		From("users u").
+		Join("posts p ON u.id = p.user_id").
+		LeftJoin("comments c ON p.id = c.post_id").
+		Where(squirrel.And{
+			squirrel.Eq{"u.active": true},
+			squirrel.Gt{"p.created_at": time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)},
+		}).
+		GroupBy("u.id", "u.name", "p.title").
+		Having("COUNT(c.id) > ?", 5).
+		OrderBy("comment_count DESC").
+		Limit(20).
+		Offset(10).
+		ToSql()
+
+	if err != nil {
+		t.Fatalf("failed to build complex query: %v", err)
+	}
+
+	expectedQuery := "SELECT u.id, u.name, p.title, COUNT(c.id) as comment_count FROM users u JOIN posts p ON u.id = p.user_id LEFT JOIN comments c ON p.id = c.post_id WHERE (u.active = $1 AND p.created_at > $2) GROUP BY u.id, u.name, p.title HAVING COUNT(c.id) > $3 ORDER BY comment_count DESC LIMIT 20 OFFSET 10"
+	if query != expectedQuery {
+		t.Errorf("expected query %q, got %q", expectedQuery, query)
+	}
+
+	if len(args) != 3 {
+		t.Errorf("expected 3 args, got %d", len(args))
 	}
 }
 
-// BenchmarkNew benchmarks postgres connection creation (will fail but measures parsing overhead)
-func BenchmarkNew(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		pg, _ := postgres.New(
-			"postgres://user:pass@127.0.0.1:65432/db",
-			postgres.ConnAttempts(1),
-		)
-		if pg != nil {
-			pg.Close()
-		}
+func TestPostgres_SquirrelBuilderBatchInsert(t *testing.T) {
+	pg := &postgres.Postgres{}
+	pg.Builder = squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
+
+	// Test batch insert with multiple rows
+	insertBuilder := pg.Builder.Insert("products").Columns("name", "price", "category_id")
+
+	products := []struct {
+		name       string
+		price      float64
+		categoryID int
+	}{
+		{"Product A", 19.99, 1},
+		{"Product B", 29.99, 2},
+		{"Product C", 39.99, 1},
+		{"Product D", 49.99, 3},
+	}
+
+	for _, product := range products {
+		insertBuilder = insertBuilder.Values(product.name, product.price, product.categoryID)
+	}
+
+	query, args, err := insertBuilder.ToSql()
+
+	if err != nil {
+		t.Fatalf("failed to build batch insert query: %v", err)
+	}
+
+	expectedQuery := "INSERT INTO products (name,price,category_id) VALUES ($1,$2,$3),($4,$5,$6),($7,$8,$9),($10,$11,$12)"
+	if query != expectedQuery {
+		t.Errorf("expected query %q, got %q", expectedQuery, query)
+	}
+
+	if len(args) != 12 {
+		t.Errorf("expected 12 args, got %d", len(args))
+	}
+}
+
+func TestPostgres_SquirrelBuilderUpsert(t *testing.T) {
+	pg := &postgres.Postgres{}
+	pg.Builder = squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
+
+	// Test UPSERT using ON CONFLICT
+	query, args, err := pg.Builder.
+		Insert("users").
+		Columns("email", "name", "updated_at").
+		Values("john@example.com", "John Doe", "NOW()").
+		Suffix("ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name, updated_at = EXCLUDED.updated_at").
+		ToSql()
+
+	if err != nil {
+		t.Fatalf("failed to build upsert query: %v", err)
+	}
+
+	expectedQuery := "INSERT INTO users (email,name,updated_at) VALUES ($1,$2,$3) ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name, updated_at = EXCLUDED.updated_at"
+	if query != expectedQuery {
+		t.Errorf("expected query %q, got %q", expectedQuery, query)
+	}
+
+	if len(args) != 3 {
+		t.Errorf("expected 3 args, got %d", len(args))
 	}
 }

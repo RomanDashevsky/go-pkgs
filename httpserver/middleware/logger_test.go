@@ -218,22 +218,51 @@ func TestLogger_NextError(t *testing.T) {
 	}
 }
 
-// BenchmarkLogger benchmarks the logger middleware
-func BenchmarkLogger(b *testing.B) {
+func TestLogger_LargePayload(t *testing.T) {
+	mockLog := &mockLogger{}
+	app := fiber.New()
+	app.Use(middleware.Logger(mockLog))
+
+	largeBody := strings.Repeat("a", 10000)
+	app.Post("/", func(c *fiber.Ctx) error {
+		return c.SendString(largeBody)
+	})
+
+	req := httptest.NewRequest("POST", "/", strings.NewReader(largeBody))
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("app.Test failed: %v", err)
+	}
+
+	if resp.StatusCode != 200 {
+		t.Errorf("expected status 200, got %d", resp.StatusCode)
+	}
+
+	if len(mockLog.logs) == 0 {
+		t.Fatal("expected log entry")
+	}
+}
+
+func TestLogger_WithCustomHeaders(t *testing.T) {
 	mockLog := &mockLogger{}
 	app := fiber.New()
 	app.Use(middleware.Logger(mockLog))
 	app.Get("/", func(c *fiber.Ctx) error {
-		return c.SendString("benchmark response")
+		return c.SendString("OK")
 	})
 
+	// Test with various headers
 	req := httptest.NewRequest("GET", "/", nil)
+	req.Header.Set("User-Agent", "test-agent/1.0")
+	req.Header.Set("Authorization", "Bearer token123")
+	req.Header.Set("X-Request-ID", "req-123")
 
-	b.ResetTimer()
-	b.RunParallel(func(pb *testing.PB) {
-		for pb.Next() {
-			resp, _ := app.Test(req)
-			resp.Body.Close()
-		}
-	})
+	_, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("app.Test failed: %v", err)
+	}
+
+	if len(mockLog.logs) == 0 {
+		t.Fatal("expected log entry")
+	}
 }
