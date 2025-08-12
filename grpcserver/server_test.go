@@ -69,7 +69,7 @@ func TestServer_Start(t *testing.T) {
 		if err != nil {
 			t.Fatalf("failed to connect to server: %v", err)
 		}
-		defer conn.Close()
+		defer func() { _ = conn.Close() }()
 
 		// Check health
 		healthClient := grpc_health_v1.NewHealthClient(conn)
@@ -98,7 +98,7 @@ func TestServer_Start(t *testing.T) {
 		// Start first server
 		server1 := New(Port(port))
 		server1.Start()
-		defer server1.Shutdown()
+		defer func() { _ = server1.Shutdown() }()
 
 		// Wait for first server to start
 		time.Sleep(100 * time.Millisecond)
@@ -177,7 +177,7 @@ func TestServer_Shutdown(t *testing.T) {
 		if err != nil {
 			t.Fatalf("failed to connect: %v", err)
 		}
-		defer conn.Close()
+		defer func() { _ = conn.Close() }()
 
 		// Shutdown the server
 		err = server.Shutdown()
@@ -254,7 +254,7 @@ func TestIntegration(t *testing.T) {
 		if err != nil {
 			t.Fatalf("failed to connect: %v", err)
 		}
-		defer conn.Close()
+		defer func() { _ = conn.Close() }()
 
 		// Check health
 		healthClient := grpc_health_v1.NewHealthClient(conn)
@@ -304,11 +304,11 @@ func TestIntegration(t *testing.T) {
 func findFreePort(t *testing.T) string {
 	t.Helper()
 
-	listener, err := net.Listen("tcp", ":0")
+	listener, err := net.Listen("tcp", ":0") //nolint:gosec // G102: Test code needs to bind to all interfaces
 	if err != nil {
 		t.Fatalf("failed to find free port: %v", err)
 	}
-	defer listener.Close()
+	defer func() { _ = listener.Close() }()
 
 	_, port, err := net.SplitHostPort(listener.Addr().String())
 	if err != nil {

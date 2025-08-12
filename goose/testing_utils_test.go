@@ -16,7 +16,7 @@ type logEntry struct {
 	message string
 }
 
-func (m *mockLogger) Debug(message interface{}, args ...interface{}) {
+func (m *mockLogger) Debug(message interface{}, _ ...interface{}) {
 	m.logs = append(m.logs, logEntry{
 		level:   "DEBUG",
 		message: fmt.Sprintf("%v", message),
@@ -101,11 +101,11 @@ func (m *mockLogger) getLogsByLevel(level string) []string {
 // to avoid logging overhead affecting benchmark results
 type benchmarkLogger struct{}
 
-func (l *benchmarkLogger) Debug(message interface{}, args ...interface{}) {}
-func (l *benchmarkLogger) Info(message string, args ...interface{})       {}
-func (l *benchmarkLogger) Warn(message string, args ...interface{})       {}
-func (l *benchmarkLogger) Error(message interface{}, args ...interface{}) {}
-func (l *benchmarkLogger) Fatal(message interface{}, args ...interface{}) {}
+func (l *benchmarkLogger) Debug(_ interface{}, _ ...interface{}) {}
+func (l *benchmarkLogger) Info(_ string, _ ...interface{})       {}
+func (l *benchmarkLogger) Warn(_ string, _ ...interface{})       {}
+func (l *benchmarkLogger) Error(_ interface{}, _ ...interface{}) {}
+func (l *benchmarkLogger) Fatal(_ interface{}, _ ...interface{}) {}
 
 // Ensure both loggers implement logger.LoggerI
 var (

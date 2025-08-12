@@ -25,7 +25,7 @@ func ExampleNew_withMinimalConfig() {
 	}
 
 	conn := rabbitmq.New("simple-exchange", cfg)
-	fmt.Printf("Exchange: %s, URL: %s\n", conn.ConsumerExchange, conn.Config.URL)
+	fmt.Printf("Exchange: %s, URL: %s\n", conn.ConsumerExchange, conn.URL)
 	// Output: Exchange: simple-exchange, URL: amqp://localhost:5672/
 }
 
@@ -48,7 +48,7 @@ func ExampleConnection_AttemptConnect() {
 
 	// Clean up
 	if conn.Connection != nil {
-		conn.Connection.Close()
+		_ = conn.Connection.Close()
 	}
 	// Output when RabbitMQ is not available: Failed to connect: rmq_rpc - AttemptConnect - c.connect: amqp.Dial: dial tcp [::1]:5672: connect: connection refused
 }
@@ -62,9 +62,9 @@ func ExampleConfig() {
 
 	conn := rabbitmq.New("production-exchange", cfg)
 
-	fmt.Printf("URL: %s\n", conn.Config.URL)
-	fmt.Printf("Wait time: %v\n", conn.Config.WaitTime)
-	fmt.Printf("Max attempts: %d\n", conn.Config.Attempts)
+	fmt.Printf("URL: %s\n", conn.URL)
+	fmt.Printf("Wait time: %v\n", conn.WaitTime)
+	fmt.Printf("Max attempts: %d\n", conn.Attempts)
 	// Output:
 	// URL: amqp://user:password@rabbitmq.example.com:5672/my-vhost
 	// Wait time: 10s
@@ -81,15 +81,15 @@ func ExampleConnection_AttemptConnect_withRetry() {
 	conn := rabbitmq.New("retry-exchange", cfg)
 
 	fmt.Printf("Attempting to connect with %d attempts, %v wait time\n",
-		conn.Config.Attempts, conn.Config.WaitTime)
+		conn.Attempts, conn.WaitTime)
 
 	err := conn.AttemptConnect()
 	if err != nil {
-		fmt.Printf("Connection failed after %d attempts\n", conn.Config.Attempts)
+		fmt.Printf("Connection failed after %d attempts\n", conn.Attempts)
 	} else {
 		fmt.Println("Connection successful")
 		if conn.Connection != nil {
-			conn.Connection.Close()
+			_ = conn.Connection.Close()
 		}
 	}
 	// Output: Attempting to connect with 3 attempts, 2s wait time

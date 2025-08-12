@@ -112,7 +112,7 @@ func TestServer_NotifyChannel(t *testing.T) {
 	}
 
 	// Shutdown
-	server.Shutdown()
+	_ = server.Shutdown()
 }
 
 func TestOptions(t *testing.T) {

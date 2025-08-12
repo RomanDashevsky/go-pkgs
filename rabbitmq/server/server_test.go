@@ -8,18 +8,20 @@ import (
 	"github.com/rdashevsky/go-pkgs/rabbitmq/server"
 )
 
-// mockLogger implements logger.Interface for testing
+const testResponseMessage = "test response"
+
+// mockLogger implements logger.LoggerI for testing
 type mockLogger struct {
 	msgs []string
 }
 
-func (m *mockLogger) Debug(message interface{}, args ...interface{}) {}
+func (m *mockLogger) Debug(_ interface{}, _ ...interface{}) {}
 
-func (m *mockLogger) Info(message string, args ...interface{}) {}
+func (m *mockLogger) Info(_ string, _ ...interface{}) {}
 
-func (m *mockLogger) Warn(message string, args ...interface{}) {}
+func (m *mockLogger) Warn(_ string, _ ...interface{}) {}
 
-func (m *mockLogger) Error(message interface{}, args ...interface{}) {
+func (m *mockLogger) Error(message interface{}, _ ...interface{}) {
 	if msg, ok := message.(string); ok {
 		m.msgs = append(m.msgs, msg)
 	}
@@ -51,8 +53,8 @@ func TestNew(t *testing.T) {
 	t.Run("fails with unreachable server", func(t *testing.T) {
 		logger := &mockLogger{}
 		router := map[string]server.CallHandler{
-			"test-handler": func(d *amqp.Delivery) (interface{}, error) {
-				return "test response", nil
+			"test-handler": func(_ *amqp.Delivery) (interface{}, error) {
+				return testResponseMessage, nil
 			},
 		}
 
@@ -116,10 +118,10 @@ func TestNew(t *testing.T) {
 	t.Run("creates server with multiple handlers", func(t *testing.T) {
 		logger := &mockLogger{}
 		router := map[string]server.CallHandler{
-			"handler1": func(d *amqp.Delivery) (interface{}, error) {
+			"handler1": func(_ *amqp.Delivery) (interface{}, error) {
 				return "response1", nil
 			},
-			"handler2": func(d *amqp.Delivery) (interface{}, error) {
+			"handler2": func(_ *amqp.Delivery) (interface{}, error) {
 				return "response2", nil
 			},
 		}
@@ -142,7 +144,7 @@ func TestNew(t *testing.T) {
 	t.Run("succeeds with valid server (integration)", func(t *testing.T) {
 		logger := &mockLogger{}
 		router := map[string]server.CallHandler{
-			"test": func(d *amqp.Delivery) (interface{}, error) {
+			"test": func(_ *amqp.Delivery) (interface{}, error) {
 				return map[string]string{"status": "ok"}, nil
 			},
 		}
@@ -159,7 +161,7 @@ func TestNew(t *testing.T) {
 		if err != nil {
 			t.Skipf("RabbitMQ server not available: %v", err)
 		}
-		defer s.Shutdown()
+		defer func() { _ = s.Shutdown() }()
 
 		// Verify server was created
 		if s == nil {
@@ -176,8 +178,8 @@ func TestNew(t *testing.T) {
 
 func TestCallHandler(t *testing.T) {
 	t.Run("handler function signature", func(t *testing.T) {
-		handler := func(d *amqp.Delivery) (interface{}, error) {
-			return "test response", nil
+		handler := func(_ *amqp.Delivery) (interface{}, error) {
+			return testResponseMessage, nil
 		}
 
 		// Test with mock delivery
@@ -191,13 +193,13 @@ func TestCallHandler(t *testing.T) {
 			t.Errorf("unexpected error: %v", err)
 		}
 
-		if response != "test response" {
+		if response != testResponseMessage {
 			t.Errorf("expected 'test response', got %v", response)
 		}
 	})
 
 	t.Run("handler returns error", func(t *testing.T) {
-		handler := func(d *amqp.Delivery) (interface{}, error) {
+		handler := func(_ *amqp.Delivery) (interface{}, error) { //nolint:unparam // Test function always returns nil interface
 			return nil, &amqp.Error{Code: 404, Reason: "not found"}
 		}
 
@@ -261,7 +263,7 @@ func TestServer_Shutdown(t *testing.T) {
 	t.Run("shutdown with connection (integration)", func(t *testing.T) {
 		logger := &mockLogger{}
 		router := map[string]server.CallHandler{
-			"test": func(d *amqp.Delivery) (interface{}, error) {
+			"test": func(_ *amqp.Delivery) (interface{}, error) {
 				return "ok", nil
 			},
 		}
@@ -310,7 +312,7 @@ func TestServer_Notify(t *testing.T) {
 		if err != nil {
 			t.Skipf("RabbitMQ server not available: %v", err)
 		}
-		defer s.Shutdown()
+		defer func() { _ = s.Shutdown() }()
 
 		notifyCh := s.Notify()
 		if notifyCh == nil {
@@ -360,13 +362,13 @@ func TestServerOptions(t *testing.T) {
 			logger := &mockLogger{}
 			router := map[string]server.CallHandler{}
 
-			opts := append(tc.opts, server.ConnWaitTime(10*time.Millisecond), server.ConnAttempts(1))
+			tc.opts = append(tc.opts, server.ConnWaitTime(10*time.Millisecond), server.ConnAttempts(1))
 			_, err := server.New(
 				"amqp://guest:guest@nonexistent-host:5672/",
 				"server-exchange",
 				router,
 				logger,
-				opts...,
+				tc.opts...,
 			)
 			// Should fail due to connection, but options should be processed
 			if err == nil {

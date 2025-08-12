@@ -66,7 +66,7 @@ func BenchmarkConnection_AttemptConnect(b *testing.B) {
 		}
 		// Clean up immediately to avoid resource exhaustion
 		if conns[i].Connection != nil {
-			conns[i].Connection.Close()
+			_ = conns[i].Connection.Close()
 		}
 	}
 }
@@ -87,7 +87,7 @@ func BenchmarkConnection_AttemptConnectWithRetry(b *testing.B) {
 		}
 		// Clean up
 		if conn.Connection != nil {
-			conn.Connection.Close()
+			_ = conn.Connection.Close()
 		}
 	}
 }
@@ -129,7 +129,7 @@ func BenchmarkConnection_ConfigVariations(b *testing.B) {
 			b.Skip("RabbitMQ server not available for benchmark")
 		}
 		if conn.Connection != nil {
-			conn.Connection.Close()
+			_ = conn.Connection.Close()
 		}
 	}
 }
@@ -157,7 +157,7 @@ func BenchmarkConnection_ExchangeNameLength(b *testing.B) {
 			b.Skip("RabbitMQ server not available for benchmark")
 		}
 		if conn.Connection != nil {
-			conn.Connection.Close()
+			_ = conn.Connection.Close()
 		}
 	}
 }

@@ -47,7 +47,6 @@ func ExampleNew() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer pg1.Close()
 
 	// Connection with custom pool size
 	pg2, err := postgres.New(
@@ -55,10 +54,9 @@ func ExampleNew() {
 		postgres.MaxPoolSize(20),
 	)
 	if err != nil {
+		pg1.Close()
 		log.Fatal(err)
 	}
-	defer pg2.Close()
-
 	// Connection with timeout and retry settings
 	pg3, err := postgres.New(
 		"postgres://user:password@localhost:5432/database",
@@ -66,9 +64,10 @@ func ExampleNew() {
 		postgres.ConnAttempts(5),
 	)
 	if err != nil {
+		pg2.Close()
+		pg1.Close()
 		log.Fatal(err)
 	}
-	defer pg3.Close()
 
 	// Connection with all options
 	pg4, err := postgres.New(
@@ -78,9 +77,17 @@ func ExampleNew() {
 		postgres.ConnAttempts(3),
 	)
 	if err != nil {
+		pg3.Close()
+		pg2.Close()
+		pg1.Close()
 		log.Fatal(err)
 	}
-	defer pg4.Close()
+	defer func() {
+		pg4.Close()
+		pg3.Close()
+		pg2.Close()
+		pg1.Close()
+	}()
 
 	fmt.Println("All connections created successfully")
 	// Output: All connections created successfully

@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/evrone/go-clean-template/pkg/logger"
-	rmqrpc "github.com/evrone/go-clean-template/pkg/rabbitmq/rmq_rpc"
 	"github.com/goccy/go-json"
 	amqp "github.com/rabbitmq/amqp091-go"
+	"github.com/rdashevsky/go-pkgs/logger"
+	rmqrpc "github.com/rdashevsky/go-pkgs/rabbitmq"
 )
 
 const (
@@ -33,7 +33,7 @@ type Server struct {
 
 	timeout time.Duration
 
-	logger logger.Interface
+	logger logger.LoggerI
 }
 
 // New creates a new RabbitMQ RPC server with the specified configuration.
@@ -47,7 +47,7 @@ type Server struct {
 //   - opts: optional configuration functions (Timeout, ConnWaitTime, ConnAttempts)
 //
 // Returns an error if the connection cannot be established.
-func New(url, serverExchange string, router map[string]CallHandler, l logger.Interface, opts ...Option) (*Server, error) {
+func New(url, serverExchange string, router map[string]CallHandler, l logger.LoggerI, opts ...Option) (*Server, error) {
 	cfg := rmqrpc.Config{
 		URL:      url,
 		WaitTime: _defaultWaitTime,

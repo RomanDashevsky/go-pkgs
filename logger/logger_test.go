@@ -31,12 +31,12 @@ func TestLoggerCreation(t *testing.T) {
 }
 
 // TestLoggerInterface ensures Logger implements LoggerI
-func TestLoggerInterface(t *testing.T) {
+func TestLoggerInterface(_ *testing.T) {
 	var _ logger.LoggerI = logger.New("info")
 }
 
 // TestLoggerMethods tests that all methods can be called without panic
-func TestLoggerMethods(t *testing.T) {
+func TestLoggerMethods(_ *testing.T) {
 	l := logger.New("debug")
 
 	// These should not panic

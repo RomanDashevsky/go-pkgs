@@ -6,7 +6,6 @@ toolchain go1.24.6
 
 require (
 	github.com/Masterminds/squirrel v1.5.4
-	github.com/evrone/go-clean-template v1.12.5
 	github.com/goccy/go-json v0.10.5
 	github.com/gofiber/fiber/v2 v2.52.9
 	github.com/google/uuid v1.6.0

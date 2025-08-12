@@ -12,7 +12,7 @@ import (
 func BenchmarkNew(b *testing.B) {
 	logger := &mockLogger{}
 	router := map[string]server.CallHandler{
-		"test": func(d *amqp.Delivery) (interface{}, error) {
+		"test": func(_ *amqp.Delivery) (interface{}, error) {
 			return "response", nil
 		},
 	}
@@ -33,10 +33,10 @@ func BenchmarkNew(b *testing.B) {
 func BenchmarkNewWithOptions(b *testing.B) {
 	logger := &mockLogger{}
 	router := map[string]server.CallHandler{
-		"handler1": func(d *amqp.Delivery) (interface{}, error) {
+		"handler1": func(_ *amqp.Delivery) (interface{}, error) {
 			return map[string]string{"result": "ok"}, nil
 		},
-		"handler2": func(d *amqp.Delivery) (interface{}, error) {
+		"handler2": func(_ *amqp.Delivery) (interface{}, error) {
 			return []int{1, 2, 3}, nil
 		},
 	}
@@ -58,7 +58,7 @@ func BenchmarkNewWithOptions(b *testing.B) {
 func BenchmarkServer_Shutdown(b *testing.B) {
 	logger := &mockLogger{}
 	router := map[string]server.CallHandler{
-		"test": func(d *amqp.Delivery) (interface{}, error) {
+		"test": func(_ *amqp.Delivery) (interface{}, error) {
 			return "ok", nil
 		},
 	}
@@ -88,7 +88,7 @@ func BenchmarkServer_Shutdown(b *testing.B) {
 func BenchmarkServer_Notify(b *testing.B) {
 	logger := &mockLogger{}
 	router := map[string]server.CallHandler{
-		"test": func(d *amqp.Delivery) (interface{}, error) {
+		"test": func(_ *amqp.Delivery) (interface{}, error) {
 			return "ok", nil
 		},
 	}
@@ -104,7 +104,7 @@ func BenchmarkServer_Notify(b *testing.B) {
 	if err != nil {
 		b.Skip("RabbitMQ server not available for benchmark")
 	}
-	defer s.Shutdown()
+	defer func() { _ = s.Shutdown() }()
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -113,7 +113,7 @@ func BenchmarkServer_Notify(b *testing.B) {
 }
 
 func BenchmarkCallHandler_Simple(b *testing.B) {
-	handler := func(d *amqp.Delivery) (interface{}, error) {
+	handler := func(_ *amqp.Delivery) (interface{}, error) {
 		return "simple response", nil
 	}
 
@@ -129,7 +129,7 @@ func BenchmarkCallHandler_Simple(b *testing.B) {
 }
 
 func BenchmarkCallHandler_Complex(b *testing.B) {
-	handler := func(d *amqp.Delivery) (interface{}, error) {
+	handler := func(d *amqp.Delivery) (interface{}, error) { //nolint:unparam // Test function always returns nil error
 		return map[string]interface{}{
 			"status":    "success",
 			"timestamp": time.Now().Unix(),
@@ -151,19 +151,19 @@ func BenchmarkCallHandler_Complex(b *testing.B) {
 
 func BenchmarkRouterLookup(b *testing.B) {
 	router := map[string]server.CallHandler{
-		"handler1": func(d *amqp.Delivery) (interface{}, error) {
+		"handler1": func(_ *amqp.Delivery) (interface{}, error) {
 			return "response1", nil
 		},
-		"handler2": func(d *amqp.Delivery) (interface{}, error) {
+		"handler2": func(_ *amqp.Delivery) (interface{}, error) {
 			return "response2", nil
 		},
-		"handler3": func(d *amqp.Delivery) (interface{}, error) {
+		"handler3": func(_ *amqp.Delivery) (interface{}, error) {
 			return "response3", nil
 		},
-		"handler4": func(d *amqp.Delivery) (interface{}, error) {
+		"handler4": func(_ *amqp.Delivery) (interface{}, error) {
 			return "response4", nil
 		},
-		"handler5": func(d *amqp.Delivery) (interface{}, error) {
+		"handler5": func(_ *amqp.Delivery) (interface{}, error) {
 			return "response5", nil
 		},
 	}
@@ -192,7 +192,7 @@ func BenchmarkMockLogger_Error(b *testing.B) {
 func BenchmarkServerOptions(b *testing.B) {
 	logger := &mockLogger{}
 	router := map[string]server.CallHandler{
-		"test": func(d *amqp.Delivery) (interface{}, error) {
+		"test": func(_ *amqp.Delivery) (interface{}, error) {
 			return "ok", nil
 		},
 	}
@@ -232,7 +232,7 @@ func BenchmarkServerCreationWithDifferentRouterSizes(b *testing.B) {
 			router := make(map[string]server.CallHandler)
 			for i := 0; i < size; i++ {
 				handlerName := fmt.Sprintf("handler%d", i)
-				router[handlerName] = func(d *amqp.Delivery) (interface{}, error) {
+				router[handlerName] = func(_ *amqp.Delivery) (interface{}, error) {
 					return fmt.Sprintf("response%d", i), nil
 				}
 			}

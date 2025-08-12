@@ -11,7 +11,7 @@ import (
 func ExampleNew() {
 	logger := &mockLogger{}
 	router := map[string]server.CallHandler{
-		"hello": func(d *amqp.Delivery) (interface{}, error) {
+		"hello": func(_ *amqp.Delivery) (interface{}, error) {
 			return map[string]string{"message": "Hello, World!"}, nil
 		},
 	}
@@ -28,7 +28,7 @@ func ExampleNew() {
 		fmt.Printf("Failed to create server: %v\n", err)
 		return
 	}
-	defer s.Shutdown()
+	defer func() { _ = s.Shutdown() }()
 
 	fmt.Println("Server created successfully")
 	// Output when RabbitMQ is not available: Failed to create server: rmq_rpc server - NewServer - s.conn.AttemptConnect: rmq_rpc - AttemptConnect - c.connect: amqp.Dial: dial tcp 127.0.0.1:5672: connect: connection refused
@@ -58,7 +58,7 @@ func ExampleNew_withOptions() {
 		fmt.Printf("Failed to create server with options: %v\n", err)
 		return
 	}
-	defer s.Shutdown()
+	defer func() { _ = s.Shutdown() }()
 
 	fmt.Println("Server with custom options created")
 	// Output when RabbitMQ is not available: Failed to create server with options: rmq_rpc server - NewServer - s.conn.AttemptConnect: rmq_rpc - AttemptConnect - c.connect: amqp.Dial: dial tcp 127.0.0.1:5672: connect: connection refused
@@ -67,11 +67,11 @@ func ExampleNew_withOptions() {
 func ExampleServer_Start() {
 	logger := &mockLogger{}
 	router := map[string]server.CallHandler{
-		"add": func(d *amqp.Delivery) (interface{}, error) {
+		"add": func(_ *amqp.Delivery) (interface{}, error) {
 			// Parse request and perform addition
 			return map[string]int{"result": 42}, nil
 		},
-		"multiply": func(d *amqp.Delivery) (interface{}, error) {
+		"multiply": func(_ *amqp.Delivery) (interface{}, error) {
 			// Parse request and perform multiplication
 			return map[string]int{"result": 84}, nil
 		},
@@ -89,7 +89,7 @@ func ExampleServer_Start() {
 		fmt.Printf("Failed to create server: %v\n", err)
 		return
 	}
-	defer s.Shutdown()
+	defer func() { _ = s.Shutdown() }()
 
 	// Start the server
 	s.Start()
@@ -104,7 +104,7 @@ func ExampleServer_Start() {
 func ExampleServer_Notify() {
 	logger := &mockLogger{}
 	router := map[string]server.CallHandler{
-		"ping": func(d *amqp.Delivery) (interface{}, error) {
+		"ping": func(_ *amqp.Delivery) (interface{}, error) {
 			return "pong", nil
 		},
 	}
@@ -121,7 +121,7 @@ func ExampleServer_Notify() {
 		fmt.Printf("Failed to create server: %v\n", err)
 		return
 	}
-	defer s.Shutdown()
+	defer func() { _ = s.Shutdown() }()
 
 	// Get error notification channel
 	errorCh := s.Notify()
@@ -139,7 +139,7 @@ func ExampleServer_Notify() {
 func ExampleServer_Shutdown() {
 	logger := &mockLogger{}
 	router := map[string]server.CallHandler{
-		"task": func(d *amqp.Delivery) (interface{}, error) {
+		"task": func(_ *amqp.Delivery) (interface{}, error) {
 			return map[string]string{"status": "completed"}, nil
 		},
 	}
@@ -172,12 +172,12 @@ func ExampleServer_Shutdown() {
 
 func ExampleCallHandler() {
 	// Example of a simple handler
-	simpleHandler := func(d *amqp.Delivery) (interface{}, error) {
+	simpleHandler := func(d *amqp.Delivery) (interface{}, error) { //nolint:unparam // Example function always returns nil error
 		return "Hello, " + string(d.Body), nil
 	}
 
 	// Example of a complex handler
-	complexHandler := func(d *amqp.Delivery) (interface{}, error) {
+	complexHandler := func(d *amqp.Delivery) (interface{}, error) { //nolint:unparam // Example function always returns nil error
 		return map[string]interface{}{
 			"received_at": time.Now().Unix(),
 			"body_size":   len(d.Body),
@@ -208,7 +208,7 @@ func ExampleCallHandler() {
 func ExampleTimeout() {
 	logger := &mockLogger{}
 	router := map[string]server.CallHandler{
-		"slow": func(d *amqp.Delivery) (interface{}, error) {
+		"slow": func(_ *amqp.Delivery) (interface{}, error) {
 			// Simulate slow processing
 			time.Sleep(100 * time.Millisecond)
 			return "processed", nil
@@ -228,7 +228,7 @@ func ExampleTimeout() {
 		fmt.Printf("Failed to create server: %v\n", err)
 		return
 	}
-	defer s.Shutdown()
+	defer func() { _ = s.Shutdown() }()
 
 	fmt.Println("Server created with 500ms timeout")
 	// Output when RabbitMQ is not available: Failed to create server: rmq_rpc server - NewServer - s.conn.AttemptConnect: rmq_rpc - AttemptConnect - c.connect: amqp.Dial: dial tcp 127.0.0.1:5672: connect: connection refused
@@ -237,7 +237,7 @@ func ExampleTimeout() {
 func ExampleConnWaitTime() {
 	logger := &mockLogger{}
 	router := map[string]server.CallHandler{
-		"test": func(d *amqp.Delivery) (interface{}, error) {
+		"test": func(_ *amqp.Delivery) (interface{}, error) {
 			return "ok", nil
 		},
 	}
@@ -254,7 +254,7 @@ func ExampleConnWaitTime() {
 		fmt.Printf("Failed to create server: %v\n", err)
 		return
 	}
-	defer s.Shutdown()
+	defer func() { _ = s.Shutdown() }()
 
 	fmt.Println("Server created with fast connection wait time")
 	// Output when RabbitMQ is not available: Failed to create server: rmq_rpc server - NewServer - s.conn.AttemptConnect: rmq_rpc - AttemptConnect - c.connect: amqp.Dial: dial tcp 127.0.0.1:5672: connect: connection refused
@@ -263,7 +263,7 @@ func ExampleConnWaitTime() {
 func ExampleConnAttempts() {
 	logger := &mockLogger{}
 	router := map[string]server.CallHandler{
-		"robust": func(d *amqp.Delivery) (interface{}, error) {
+		"robust": func(_ *amqp.Delivery) (interface{}, error) {
 			return map[string]bool{"robust": true}, nil
 		},
 	}
@@ -280,7 +280,7 @@ func ExampleConnAttempts() {
 		fmt.Printf("Failed to create server after 1 attempts: %v\n", err)
 		return
 	}
-	defer s.Shutdown()
+	defer func() { _ = s.Shutdown() }()
 
 	fmt.Println("Robust server connected successfully")
 	// Output when RabbitMQ is not available: Failed to create server after 1 attempts: rmq_rpc server - NewServer - s.conn.AttemptConnect: rmq_rpc - AttemptConnect - c.connect: amqp.Dial: dial tcp 127.0.0.1:5672: connect: connection refused

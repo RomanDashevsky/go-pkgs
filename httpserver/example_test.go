@@ -212,7 +212,7 @@ func ExampleServer_notifyChannel() {
 
 	// Simulate running for a short time
 	time.Sleep(100 * time.Millisecond)
-	server.Shutdown()
+	_ = server.Shutdown()
 }
 
 // ExampleServer_fileServer demonstrates serving static files

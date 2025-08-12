@@ -12,23 +12,23 @@ import (
 // exampleLogger is a simple logger implementation for examples
 type exampleLogger struct{}
 
-func (e *exampleLogger) Debug(message interface{}, args ...interface{}) {
+func (e *exampleLogger) Debug(message interface{}, _ ...interface{}) {
 	fmt.Printf("DEBUG: %v\n", message)
 }
 
-func (e *exampleLogger) Info(message string, args ...interface{}) {
+func (e *exampleLogger) Info(message string, _ ...interface{}) {
 	fmt.Printf("INFO: %s\n", message)
 }
 
-func (e *exampleLogger) Warn(message string, args ...interface{}) {
+func (e *exampleLogger) Warn(message string, _ ...interface{}) {
 	fmt.Printf("WARN: %s\n", message)
 }
 
-func (e *exampleLogger) Error(message interface{}, args ...interface{}) {
+func (e *exampleLogger) Error(message interface{}, _ ...interface{}) {
 	fmt.Printf("ERROR: %v\n", message)
 }
 
-func (e *exampleLogger) Fatal(message interface{}, args ...interface{}) {
+func (e *exampleLogger) Fatal(message interface{}, _ ...interface{}) {
 	fmt.Printf("FATAL: %v\n", message)
 }
 
@@ -51,7 +51,7 @@ func ExampleLogger() {
 	// Make a test request
 	req := httptest.NewRequest("GET", "/hello", nil)
 	resp, _ := app.Test(req)
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	fmt.Printf("Response Status: %d\n", resp.StatusCode)
 	// Output:
@@ -86,13 +86,13 @@ func ExampleLogger_withAPI() {
 	// Test GET request
 	getReq := httptest.NewRequest("GET", "/api/users", nil)
 	getResp, _ := app.Test(getReq)
-	defer getResp.Body.Close()
+	defer func() { _ = getResp.Body.Close() }()
 
 	// Test POST request
 	postReq := httptest.NewRequest("POST", "/api/users", nil)
 	postReq.Header.Set("Content-Type", "application/json")
 	postResp, _ := app.Test(postReq)
-	defer postResp.Body.Close()
+	defer func() { _ = postResp.Body.Close() }()
 
 	fmt.Printf("GET Status: %d\n", getResp.StatusCode)
 	fmt.Printf("POST Status: %d\n", postResp.StatusCode)
@@ -110,24 +110,24 @@ func ExampleLogger_errorHandling() {
 	app.Use(middleware.Logger(logger))
 
 	// Route that returns 404
-	app.Get("/notfound", func(c *fiber.Ctx) error {
+	app.Get("/notfound", func(_ *fiber.Ctx) error {
 		return fiber.ErrNotFound
 	})
 
 	// Route that returns 500
-	app.Get("/error", func(c *fiber.Ctx) error {
+	app.Get("/error", func(_ *fiber.Ctx) error {
 		return fiber.ErrInternalServerError
 	})
 
 	// Test 404 error
 	notFoundReq := httptest.NewRequest("GET", "/notfound", nil)
 	notFoundResp, _ := app.Test(notFoundReq)
-	defer notFoundResp.Body.Close()
+	defer func() { _ = notFoundResp.Body.Close() }()
 
 	// Test 500 error
 	errorReq := httptest.NewRequest("GET", "/error", nil)
 	errorResp, _ := app.Test(errorReq)
-	defer errorResp.Body.Close()
+	defer func() { _ = errorResp.Body.Close() }()
 
 	fmt.Printf("404 Status: %d\n", notFoundResp.StatusCode)
 	fmt.Printf("500 Status: %d\n", errorResp.StatusCode)
@@ -143,23 +143,23 @@ type stdLogger struct {
 	*log.Logger
 }
 
-func (s *stdLogger) Debug(message interface{}, args ...interface{}) {
+func (s *stdLogger) Debug(message interface{}, _ ...interface{}) {
 	s.Printf("DEBUG: %v", message)
 }
 
-func (s *stdLogger) Info(message string, args ...interface{}) {
+func (s *stdLogger) Info(message string, _ ...interface{}) {
 	s.Printf("INFO: %s", message)
 }
 
-func (s *stdLogger) Warn(message string, args ...interface{}) {
+func (s *stdLogger) Warn(message string, _ ...interface{}) {
 	s.Printf("WARN: %s", message)
 }
 
-func (s *stdLogger) Error(message interface{}, args ...interface{}) {
+func (s *stdLogger) Error(message interface{}, _ ...interface{}) {
 	s.Printf("ERROR: %v", message)
 }
 
-func (s *stdLogger) Fatal(message interface{}, args ...interface{}) {
+func (s *stdLogger) Fatal(message interface{}, _ ...interface{}) {
 	s.Printf("FATAL: %v", message)
 }
 
@@ -178,7 +178,7 @@ func ExampleLogger_withCustomLogger() {
 
 	req := httptest.NewRequest("GET", "/custom", nil)
 	resp, _ := app.Test(req)
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	fmt.Printf("Custom logger response: %d\n", resp.StatusCode)
 	// Output:
@@ -222,7 +222,7 @@ func ExampleLogger_multipleRoutes() {
 	for _, r := range requests {
 		req := httptest.NewRequest(r.method, r.path, nil)
 		resp, _ := app.Test(req)
-		resp.Body.Close()
+		_ = resp.Body.Close()
 		fmt.Printf("%s %s completed\n", r.method, r.path)
 	}
 
@@ -257,7 +257,7 @@ func ExampleLogger_withQueryParameters() {
 	// Test with query parameters
 	req := httptest.NewRequest("GET", "/search?q=golang&limit=5&sort=date", nil)
 	resp, _ := app.Test(req)
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	fmt.Printf("Search request status: %d\n", resp.StatusCode)
 	// Output:

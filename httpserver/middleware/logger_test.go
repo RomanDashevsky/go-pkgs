@@ -113,6 +113,7 @@ func TestLogger(t *testing.T) {
 			if err != nil {
 				t.Fatalf("app.Test failed: %v", err)
 			}
+			defer func() { _ = resp.Body.Close() }()
 
 			// Check response
 			if resp.StatusCode != tt.statusCode {
@@ -135,9 +136,9 @@ func TestLogger(t *testing.T) {
 
 			// Check response body length is in log
 			bodyLenStr := string(rune(len(tt.responseBody)))
-			if !strings.Contains(logEntry, bodyLenStr) && len(tt.responseBody) > 0 {
-				// Note: exact format might differ, this is a basic check
-			}
+			// Note: exact format might differ, this is a basic check
+			// Response body length check would go here if needed
+			_ = bodyLenStr
 		})
 	}
 }
@@ -154,10 +155,11 @@ func TestLogger_ClientIP(t *testing.T) {
 	req := httptest.NewRequest("GET", "/", nil)
 	req.Header.Set("X-Forwarded-For", "192.168.1.100")
 
-	_, err := app.Test(req)
+	resp, err := app.Test(req)
 	if err != nil {
 		t.Fatalf("app.Test failed: %v", err)
 	}
+	defer func() { _ = resp.Body.Close() }()
 
 	if len(mockLog.logs) == 0 {
 		t.Fatal("expected log entry")
@@ -176,10 +178,11 @@ func TestLogger_EmptyResponse(t *testing.T) {
 	})
 
 	req := httptest.NewRequest("GET", "/", nil)
-	_, err := app.Test(req)
+	resp, err := app.Test(req)
 	if err != nil {
 		t.Fatalf("app.Test failed: %v", err)
 	}
+	defer func() { _ = resp.Body.Close() }()
 
 	if len(mockLog.logs) == 0 {
 		t.Fatal("expected log entry")
@@ -197,7 +200,7 @@ func TestLogger_NextError(t *testing.T) {
 	app.Use(middleware.Logger(mockLog))
 
 	// Route that returns an error
-	app.Get("/", func(c *fiber.Ctx) error {
+	app.Get("/", func(_ *fiber.Ctx) error {
 		return fiber.ErrInternalServerError
 	})
 
@@ -206,6 +209,7 @@ func TestLogger_NextError(t *testing.T) {
 	if err != nil {
 		t.Fatalf("app.Test failed: %v", err)
 	}
+	defer func() { _ = resp.Body.Close() }()
 
 	// Should still log even with error
 	if len(mockLog.logs) == 0 {
@@ -233,6 +237,7 @@ func TestLogger_LargePayload(t *testing.T) {
 	if err != nil {
 		t.Fatalf("app.Test failed: %v", err)
 	}
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != 200 {
 		t.Errorf("expected status 200, got %d", resp.StatusCode)
@@ -257,10 +262,11 @@ func TestLogger_WithCustomHeaders(t *testing.T) {
 	req.Header.Set("Authorization", "Bearer token123")
 	req.Header.Set("X-Request-ID", "req-123")
 
-	_, err := app.Test(req)
+	resp, err := app.Test(req)
 	if err != nil {
 		t.Fatalf("app.Test failed: %v", err)
 	}
+	defer func() { _ = resp.Body.Close() }()
 
 	if len(mockLog.logs) == 0 {
 		t.Fatal("expected log entry")

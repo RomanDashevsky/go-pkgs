@@ -17,31 +17,31 @@ type benchmarkLogger struct {
 	logs []string
 }
 
-func (b *benchmarkLogger) Debug(message interface{}, args ...interface{}) {
+func (b *benchmarkLogger) Debug(_ interface{}, _ ...interface{}) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	b.logs = append(b.logs, "DEBUG")
 }
 
-func (b *benchmarkLogger) Info(message string, args ...interface{}) {
+func (b *benchmarkLogger) Info(_ string, _ ...interface{}) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	b.logs = append(b.logs, "INFO")
 }
 
-func (b *benchmarkLogger) Warn(message string, args ...interface{}) {
+func (b *benchmarkLogger) Warn(_ string, _ ...interface{}) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	b.logs = append(b.logs, "WARN")
 }
 
-func (b *benchmarkLogger) Error(message interface{}, args ...interface{}) {
+func (b *benchmarkLogger) Error(_ interface{}, _ ...interface{}) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	b.logs = append(b.logs, "ERROR")
 }
 
-func (b *benchmarkLogger) Fatal(message interface{}, args ...interface{}) {
+func (b *benchmarkLogger) Fatal(_ interface{}, _ ...interface{}) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	b.logs = append(b.logs, "FATAL")
@@ -50,11 +50,11 @@ func (b *benchmarkLogger) Fatal(message interface{}, args ...interface{}) {
 // noOpLogger doesn't store logs to minimize overhead
 type noOpLogger struct{}
 
-func (n *noOpLogger) Debug(message interface{}, args ...interface{}) {}
-func (n *noOpLogger) Info(message string, args ...interface{})       {}
-func (n *noOpLogger) Warn(message string, args ...interface{})       {}
-func (n *noOpLogger) Error(message interface{}, args ...interface{}) {}
-func (n *noOpLogger) Fatal(message interface{}, args ...interface{}) {}
+func (n *noOpLogger) Debug(_ interface{}, _ ...interface{}) {}
+func (n *noOpLogger) Info(_ string, _ ...interface{})       {}
+func (n *noOpLogger) Warn(_ string, _ ...interface{})       {}
+func (n *noOpLogger) Error(_ interface{}, _ ...interface{}) {}
+func (n *noOpLogger) Fatal(_ interface{}, _ ...interface{}) {}
 
 // BenchmarkLogger benchmarks the logger middleware with basic logging
 func BenchmarkLogger(b *testing.B) {
@@ -71,7 +71,7 @@ func BenchmarkLogger(b *testing.B) {
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
 			resp, _ := app.Test(req)
-			resp.Body.Close()
+			_ = resp.Body.Close()
 		}
 	})
 }
@@ -90,7 +90,7 @@ func BenchmarkLoggerWithStorage(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		resp, _ := app.Test(req)
-		resp.Body.Close()
+		_ = resp.Body.Close()
 	}
 }
 
@@ -109,7 +109,7 @@ func BenchmarkLogger_GET(b *testing.B) {
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
 			resp, _ := app.Test(req)
-			resp.Body.Close()
+			_ = resp.Body.Close()
 		}
 	})
 }
@@ -131,7 +131,7 @@ func BenchmarkLogger_POST(b *testing.B) {
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
 			resp, _ := app.Test(req)
-			resp.Body.Close()
+			_ = resp.Body.Close()
 		}
 	})
 }
@@ -152,7 +152,7 @@ func BenchmarkLogger_LargeResponse(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		resp, _ := app.Test(req)
-		resp.Body.Close()
+		_ = resp.Body.Close()
 	}
 }
 
@@ -199,7 +199,7 @@ func BenchmarkLogger_MultipleRoutes(b *testing.B) {
 			}
 
 			resp, _ := app.Test(req)
-			resp.Body.Close()
+			_ = resp.Body.Close()
 		}
 	})
 }
@@ -225,7 +225,7 @@ func BenchmarkLogger_WithHeaders(b *testing.B) {
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
 			resp, _ := app.Test(req)
-			resp.Body.Close()
+			_ = resp.Body.Close()
 		}
 	})
 }
@@ -237,12 +237,12 @@ func BenchmarkLogger_ErrorHandling(b *testing.B) {
 	app.Use(middleware.Logger(logger))
 
 	// Route that always returns 500
-	app.Get("/error", func(c *fiber.Ctx) error {
+	app.Get("/error", func(_ *fiber.Ctx) error {
 		return fiber.ErrInternalServerError
 	})
 
 	// Route that always returns 404
-	app.Get("/notfound", func(c *fiber.Ctx) error {
+	app.Get("/notfound", func(_ *fiber.Ctx) error {
 		return fiber.ErrNotFound
 	})
 
@@ -260,7 +260,7 @@ func BenchmarkLogger_ErrorHandling(b *testing.B) {
 			}
 
 			resp, _ := app.Test(req)
-			resp.Body.Close()
+			_ = resp.Body.Close()
 		}
 	})
 }
@@ -281,7 +281,7 @@ func BenchmarkLogger_Concurrent(b *testing.B) {
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
 			resp, _ := app.Test(req)
-			resp.Body.Close()
+			_ = resp.Body.Close()
 		}
 	})
 }
@@ -299,7 +299,7 @@ func BenchmarkLogger_WithoutMiddleware(b *testing.B) {
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
 			resp, _ := app.Test(req)
-			resp.Body.Close()
+			_ = resp.Body.Close()
 		}
 	})
 }

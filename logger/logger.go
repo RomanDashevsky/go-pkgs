@@ -11,6 +11,8 @@ import (
 )
 
 // LoggerI defines the interface for structured logging with different levels.
+//
+//nolint:revive // exported: LoggerI is intentionally named to be clear it's a logger interface
 type LoggerI interface {
 	// Debug logs a debug message with optional arguments.
 	Debug(message interface{}, args ...interface{})

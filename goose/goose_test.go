@@ -118,11 +118,10 @@ func TestCheckMigrationStatus_Logger(t *testing.T) {
 		if len(infoLogs) > 0 && infoLogs[0] != "Migrations are up to date: 3" {
 			t.Errorf("expected migration success message, got: %s", infoLogs[0])
 		}
-	} else {
-		// Expected case - connection fails
-		// The function should not log anything on connection failure
-		// (the error is returned, not logged)
 	}
+	// Expected case when error != nil: connection fails
+	// The function should not log anything on connection failure
+	// (the error is returned, not logged)
 }
 
 // TestCheckMigrationStatus_Success demonstrates successful migration check

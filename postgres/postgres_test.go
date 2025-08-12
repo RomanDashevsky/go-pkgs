@@ -32,7 +32,7 @@ func TestNew_URLParsing(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(_ *testing.T) {
 			pg, err := postgres.New(tt.url, tt.opts...)
 
 			// We expect either success (if there's a real DB) or connection failure
@@ -153,7 +153,7 @@ func TestPostgres_SquirrelBuilderDelete(t *testing.T) {
 	}
 }
 
-func TestPostgres_Close(t *testing.T) {
+func TestPostgres_Close(_ *testing.T) {
 	pg := &postgres.Postgres{}
 
 	// Should not panic when Pool is nil
@@ -164,7 +164,7 @@ func TestPostgres_Close(t *testing.T) {
 }
 
 func TestOptions(t *testing.T) {
-	t.Run("MaxPoolSize option", func(t *testing.T) {
+	t.Run("MaxPoolSize option", func(_ *testing.T) {
 		// Test that MaxPoolSize option can be applied without panicking
 		pg, err := postgres.New(
 			"postgres://user:pass@127.0.0.1:65432/db",
@@ -179,7 +179,7 @@ func TestOptions(t *testing.T) {
 		_ = err // Don't check error - connection outcome varies by environment
 	})
 
-	t.Run("ConnTimeout option", func(t *testing.T) {
+	t.Run("ConnTimeout option", func(_ *testing.T) {
 		// Test that ConnTimeout option can be applied without panicking
 		pg, err := postgres.New(
 			"postgres://user:pass@127.0.0.1:65432/db",
@@ -194,7 +194,7 @@ func TestOptions(t *testing.T) {
 		_ = err // Don't check error - connection outcome varies by environment
 	})
 
-	t.Run("ConnAttempts option", func(t *testing.T) {
+	t.Run("ConnAttempts option", func(_ *testing.T) {
 		// Test that ConnAttempts option can be applied without panicking
 		pg, err := postgres.New(
 			"postgres://user:pass@127.0.0.1:65432/db",
@@ -209,7 +209,7 @@ func TestOptions(t *testing.T) {
 	})
 }
 
-func TestPostgres_MultipleOptions(t *testing.T) {
+func TestPostgres_MultipleOptions(_ *testing.T) {
 	// Test that multiple options can be applied together without panicking
 	pg, err := postgres.New(
 		"postgres://testuser:testpass@127.0.0.1:65432/testdb",

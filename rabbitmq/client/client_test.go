@@ -93,7 +93,7 @@ func TestNew(t *testing.T) {
 		if err != nil {
 			t.Skipf("RabbitMQ server not available: %v", err)
 		}
-		defer c.Shutdown()
+		defer func() { _ = c.Shutdown() }()
 
 		// Verify client was created
 		if c == nil {
@@ -155,7 +155,7 @@ func TestClient_RemoteCall(t *testing.T) {
 		if err != nil {
 			t.Skipf("RabbitMQ server not available: %v", err)
 		}
-		defer c.Shutdown()
+		defer func() { _ = c.Shutdown() }()
 
 		// Test remote call (will likely timeout since no server is listening)
 		var response interface{}
@@ -179,7 +179,7 @@ func TestClient_Shutdown(t *testing.T) {
 			client.ConnAttempts(1),
 		)
 		if err == nil {
-			defer c.Shutdown()
+			defer func() { _ = c.Shutdown() }()
 			t.Fatal("expected connection error")
 		}
 	})
@@ -222,7 +222,7 @@ func TestClient_Notify(t *testing.T) {
 		if err != nil {
 			t.Skipf("RabbitMQ server not available: %v", err)
 		}
-		defer c.Shutdown()
+		defer func() { _ = c.Shutdown() }()
 
 		notifyCh := c.Notify()
 		if notifyCh == nil {
@@ -269,12 +269,12 @@ func TestClientOptions(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			opts := append(tc.opts, client.ConnWaitTime(10*time.Millisecond), client.ConnAttempts(1))
+			tc.opts = append(tc.opts, client.ConnWaitTime(10*time.Millisecond), client.ConnAttempts(1))
 			_, err := client.New(
 				"amqp://guest:guest@nonexistent-host:5672/",
 				"server-exchange",
 				"client-exchange",
-				opts...,
+				tc.opts...,
 			)
 			// Should fail due to connection, but options should be processed
 			if err == nil {

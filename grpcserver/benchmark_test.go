@@ -13,11 +13,11 @@ import (
 )
 
 func findFreeBenchPort() string {
-	listener, err := net.Listen("tcp", ":0")
+	listener, err := net.Listen("tcp", ":0") //nolint:gosec // G102: Test code needs to bind to all interfaces
 	if err != nil {
 		return "50000"
 	}
-	defer listener.Close()
+	defer func() { _ = listener.Close() }()
 
 	_, port, err := net.SplitHostPort(listener.Addr().String())
 	if err != nil {
@@ -65,7 +65,7 @@ func BenchmarkHealthCheck(b *testing.B) {
 	server := New(Port(port))
 	grpc_health_v1.RegisterHealthServer(server.App, health.NewServer())
 	server.Start()
-	defer server.Shutdown()
+	defer func() { _ = server.Shutdown() }()
 
 	// Wait for server to start
 	time.Sleep(100 * time.Millisecond)
@@ -78,7 +78,7 @@ func BenchmarkHealthCheck(b *testing.B) {
 	if err != nil {
 		b.Fatalf("failed to connect: %v", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	client := grpc_health_v1.NewHealthClient(conn)
 	ctx := context.Background()
@@ -100,7 +100,7 @@ func BenchmarkConcurrentConnections(b *testing.B) {
 	server := New(Port(port))
 	grpc_health_v1.RegisterHealthServer(server.App, health.NewServer())
 	server.Start()
-	defer server.Shutdown()
+	defer func() { _ = server.Shutdown() }()
 
 	// Wait for server to start
 	time.Sleep(100 * time.Millisecond)
@@ -123,7 +123,7 @@ func BenchmarkConcurrentConnections(b *testing.B) {
 				b.Errorf("health check failed: %v", err)
 			}
 
-			conn.Close()
+			_ = conn.Close()
 		}
 	})
 }

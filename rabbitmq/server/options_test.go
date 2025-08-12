@@ -126,7 +126,7 @@ func TestOptionApplication(t *testing.T) {
 	t.Run("options are applied during server creation", func(t *testing.T) {
 		logger := &mockLogger{}
 		router := map[string]server.CallHandler{
-			"test": func(d *amqp.Delivery) (interface{}, error) {
+			"test": func(_ *amqp.Delivery) (interface{}, error) {
 				return "ok", nil
 			},
 		}
@@ -199,7 +199,7 @@ func TestOptionApplication(t *testing.T) {
 		// Create a router with many handlers
 		for i := 0; i < 100; i++ {
 			handlerName := "handler" + string(rune('0'+i%10))
-			router[handlerName] = func(d *amqp.Delivery) (interface{}, error) {
+			router[handlerName] = func(_ *amqp.Delivery) (interface{}, error) {
 				return "response", nil
 			}
 		}

@@ -25,16 +25,16 @@ func TestNew(t *testing.T) {
 			t.Errorf("expected exchange 'test-exchange', got %s", conn.ConsumerExchange)
 		}
 
-		if conn.Config.URL != cfg.URL {
-			t.Errorf("expected URL %s, got %s", cfg.URL, conn.Config.URL)
+		if conn.URL != cfg.URL {
+			t.Errorf("expected URL %s, got %s", cfg.URL, conn.URL)
 		}
 
-		if conn.Config.WaitTime != cfg.WaitTime {
-			t.Errorf("expected WaitTime %v, got %v", cfg.WaitTime, conn.Config.WaitTime)
+		if conn.WaitTime != cfg.WaitTime {
+			t.Errorf("expected WaitTime %v, got %v", cfg.WaitTime, conn.WaitTime)
 		}
 
-		if conn.Config.Attempts != cfg.Attempts {
-			t.Errorf("expected Attempts %d, got %d", cfg.Attempts, conn.Config.Attempts)
+		if conn.Attempts != cfg.Attempts {
+			t.Errorf("expected Attempts %d, got %d", cfg.Attempts, conn.Attempts)
 		}
 	})
 
@@ -174,7 +174,7 @@ func TestConnection_AttemptConnect(t *testing.T) {
 
 		// Clean up
 		if conn.Connection != nil {
-			conn.Connection.Close()
+			_ = conn.Connection.Close()
 		}
 	})
 }

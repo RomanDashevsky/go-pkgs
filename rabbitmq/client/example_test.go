@@ -19,7 +19,7 @@ func ExampleNew() {
 		fmt.Printf("Failed to create client: %v\n", err)
 		return
 	}
-	defer c.Shutdown()
+	defer func() { _ = c.Shutdown() }()
 
 	fmt.Println("Client created successfully")
 	// Output when RabbitMQ is not available: Failed to create client: rmq_rpc client - NewClient - c.conn.AttemptConnect: rmq_rpc - AttemptConnect - c.connect: amqp.Dial: dial tcp [::1]:5672: connect: connection refused
@@ -38,7 +38,7 @@ func ExampleNew_withOptions() {
 		fmt.Printf("Failed to create client with options: %v\n", err)
 		return
 	}
-	defer c.Shutdown()
+	defer func() { _ = c.Shutdown() }()
 
 	fmt.Println("Client with custom options created")
 	// Output when RabbitMQ is not available: Failed to create client with options: rmq_rpc client - NewClient - c.conn.AttemptConnect: rmq_rpc - AttemptConnect - c.connect: amqp.Dial: dial tcp [::1]:5672: connect: connection refused
@@ -82,7 +82,7 @@ func ExampleClient_RemoteCall() {
 		fmt.Printf("Failed to create client: %v\n", err)
 		return
 	}
-	defer c.Shutdown()
+	defer func() { _ = c.Shutdown() }()
 
 	// Prepare request
 	request := map[string]interface{}{
@@ -114,7 +114,7 @@ func ExampleClient_Notify() {
 		fmt.Printf("Failed to create client: %v\n", err)
 		return
 	}
-	defer c.Shutdown()
+	defer func() { _ = c.Shutdown() }()
 
 	// Get error notification channel
 	errorCh := c.Notify()
@@ -168,7 +168,7 @@ func ExampleTimeout() {
 		fmt.Printf("Failed to create client: %v\n", err)
 		return
 	}
-	defer c.Shutdown()
+	defer func() { _ = c.Shutdown() }()
 
 	fmt.Println("Client created with 500ms timeout")
 	// Output when RabbitMQ is not available: Failed to create client: rmq_rpc client - NewClient - c.conn.AttemptConnect: rmq_rpc - AttemptConnect - c.connect: amqp.Dial: dial tcp [::1]:5672: connect: connection refused
@@ -186,7 +186,7 @@ func ExampleConnWaitTime() {
 		fmt.Printf("Failed to create client: %v\n", err)
 		return
 	}
-	defer c.Shutdown()
+	defer func() { _ = c.Shutdown() }()
 
 	fmt.Println("Client created with 2s connection wait time")
 	// Output when RabbitMQ is not available: Failed to create client: rmq_rpc client - NewClient - c.conn.AttemptConnect: rmq_rpc - AttemptConnect - c.connect: amqp.Dial: dial tcp [::1]:5672: connect: connection refused
@@ -204,7 +204,7 @@ func ExampleConnAttempts() {
 		fmt.Printf("Failed to create client after 1 attempts: %v\n", err)
 		return
 	}
-	defer c.Shutdown()
+	defer func() { _ = c.Shutdown() }()
 
 	fmt.Println("Client connected successfully")
 	// Output when RabbitMQ is not available: Failed to create client after 5 attempts: rmq_rpc client - NewClient - c.conn.AttemptConnect: rmq_rpc - AttemptConnect - c.connect: amqp.Dial: dial tcp [::1]:5672: connect: connection refused

@@ -42,7 +42,7 @@ func BenchmarkClient_RemoteCall(b *testing.B) {
 	if err != nil {
 		b.Skip("RabbitMQ server not available for benchmark")
 	}
-	defer c.Shutdown()
+	defer func() { _ = c.Shutdown() }()
 
 	request := map[string]string{"benchmark": "data"}
 	var response interface{}
@@ -83,7 +83,7 @@ func BenchmarkClient_Notify(b *testing.B) {
 	if err != nil {
 		b.Skip("RabbitMQ server not available for benchmark")
 	}
-	defer c.Shutdown()
+	defer func() { _ = c.Shutdown() }()
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -140,7 +140,7 @@ func BenchmarkClient_ConcurrentRemoteCalls(b *testing.B) {
 	if err != nil {
 		b.Skip("RabbitMQ server not available for benchmark")
 	}
-	defer c.Shutdown()
+	defer func() { _ = c.Shutdown() }()
 
 	request := map[string]string{"concurrent": "test"}
 
@@ -173,7 +173,7 @@ func BenchmarkClient_DifferentTimeouts(b *testing.B) {
 			if err != nil {
 				b.Skip("RabbitMQ server not available for benchmark")
 			}
-			defer c.Shutdown()
+			defer func() { _ = c.Shutdown() }()
 
 			request := map[string]string{"timeout": "test"}
 			var response interface{}

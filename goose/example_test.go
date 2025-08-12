@@ -200,13 +200,16 @@ func ExampleCheckMigrationStatus_productionSetup() {
 
 	// Shorter timeout for production health checks
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
 
 	pool, err := pgxpool.NewWithConfig(ctx, config)
 	if err != nil {
+		cancel()
 		log.Fatalf("Cannot connect to production database: %v", err)
 	}
-	defer pool.Close()
+	defer func() {
+		pool.Close()
+		cancel()
+	}()
 
 	// Use error-level logging in production to reduce noise
 	logger := logger.New("error")

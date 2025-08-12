@@ -50,7 +50,7 @@ func BenchmarkServer_Start(b *testing.B) {
 		b.StopTimer()
 
 		// Clean shutdown
-		server.Shutdown()
+		_ = server.Shutdown()
 	}
 }
 
@@ -151,7 +151,7 @@ func BenchmarkServer_StartupShutdownCycle(b *testing.B) {
 		}
 
 		// Shutdown
-		server.Shutdown()
+		_ = server.Shutdown()
 	}
 }
 

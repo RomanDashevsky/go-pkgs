@@ -72,14 +72,15 @@ func ExampleServer_Start() {
 	if err != nil {
 		log.Fatalf("failed to connect: %v", err)
 	}
-	defer conn.Close()
 
 	// Use the connection
 	client := grpc_health_v1.NewHealthClient(conn)
 	resp, err := client.Check(context.Background(), &grpc_health_v1.HealthCheckRequest{})
 	if err != nil {
+		_ = conn.Close()
 		log.Fatalf("health check failed: %v", err)
 	}
+	defer func() { _ = conn.Close() }()
 
 	fmt.Printf("Server status: %s\n", resp.Status.String())
 
