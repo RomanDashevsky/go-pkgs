@@ -12,7 +12,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        go-version: ['1.21', '1.22', '1.23.12']
+        go-version: ['1.23.12', '1.24']
+      fail-fast: false
     
     services:
       postgres:
@@ -91,7 +92,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: '1.23.12'
+        go-version: '1.24'
 
     - name: Cache Go modules
       uses: actions/cache@v4
@@ -125,7 +126,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        go-version: ['1.21', '1.22', '1.23.12']
+        go-version: ['1.23.12', '1.24']
     
     steps:
     - name: Checkout code
