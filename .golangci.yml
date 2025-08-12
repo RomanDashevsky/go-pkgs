@@ -1,25 +1,31 @@
 version: 2
 
+# Local development configuration (more strict than CI)
 run:
-  timeout: 2m
-  tests: false
+  timeout: 5m
+  tests: true
 
 linters:
   enable:
-    - govet
-    - staticcheck
     - errcheck
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    - gosec
+    - misspell
+    - goconst
+    - gocyclo
+    - gocritic
+    - revive
+    - unconvert
+    - unparam
+    - nakedret
+    - prealloc
+    - bodyclose
+    - dupl
 
 issues:
   exclude:
     - "Error return value of .((os\\.)?Std(out|err)|log\\.(Fatal|Print.*)) is not checked"
     - "type name will be used as logger.LoggerI by other packages, and that stutters; consider calling this I"
-
-linters-settings:
-  revive:
-    rules:
-      - name: exported
-        disabled: true
-      - name: var-naming
-        arguments:
-          - ["ID", "JSON", "HTTP", "URL", "UUID", "URI", "API", "TTL"]
