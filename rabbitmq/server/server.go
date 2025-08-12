@@ -1,3 +1,4 @@
+// Package server provides a RabbitMQ RPC server implementation for handling remote procedure calls.
 package server
 
 import (
@@ -16,10 +17,14 @@ const (
 	_defaultTimeout  = 2 * time.Second
 )
 
-// CallHandler -.
+// CallHandler is a function that processes an incoming RPC request.
+// It receives the AMQP delivery containing the request and returns a response and/or error.
+// The response will be JSON marshaled before sending back to the client.
 type CallHandler func(*amqp.Delivery) (interface{}, error)
 
-// Server -.
+// Server represents a RabbitMQ RPC server that handles incoming requests.
+// It manages the connection, routes requests to appropriate handlers,
+// and sends responses back to clients.
 type Server struct {
 	conn   *rmqrpc.Connection
 	error  chan error
@@ -31,7 +36,17 @@ type Server struct {
 	logger logger.Interface
 }
 
-// New -.
+// New creates a new RabbitMQ RPC server with the specified configuration.
+// The server establishes a connection immediately but does not start consuming until Start is called.
+//
+// Parameters:
+//   - url: RabbitMQ connection URL (e.g., "amqp://guest:guest@localhost:5672/")
+//   - serverExchange: exchange name where requests will be received
+//   - router: map of handler names to handler functions
+//   - l: logger interface for error logging
+//   - opts: optional configuration functions (Timeout, ConnWaitTime, ConnAttempts)
+//
+// Returns an error if the connection cannot be established.
 func New(url, serverExchange string, router map[string]CallHandler, l logger.Interface, opts ...Option) (*Server, error) {
 	cfg := rmqrpc.Config{
 		URL:      url,
@@ -61,7 +76,9 @@ func New(url, serverExchange string, router map[string]CallHandler, l logger.Int
 	return s, nil
 }
 
-// Start -.
+// Start begins consuming messages from the configured exchange.
+// The server processes incoming requests in a separate goroutine.
+// Use Notify() to receive server lifecycle errors.
 func (s *Server) Start() {
 	go s.consumer()
 }
@@ -139,12 +156,16 @@ func (s *Server) reconnect() {
 	go s.consumer()
 }
 
-// Notify -.
+// Notify returns a channel that receives server errors.
+// The channel is closed when a fatal error occurs that requires recreating the server.
 func (s *Server) Notify() <-chan error {
 	return s.error
 }
 
-// Shutdown -.
+// Shutdown gracefully stops the RabbitMQ server.
+// It stops consuming messages, waits for the configured timeout period,
+// and then closes the underlying connection.
+// Returns an error if the connection close fails.
 func (s *Server) Shutdown() error {
 	select {
 	case <-s.error:

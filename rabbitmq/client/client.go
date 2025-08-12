@@ -1,3 +1,4 @@
+// Package client provides a RabbitMQ RPC client implementation for making remote procedure calls.
 package client
 
 import (
@@ -12,7 +13,7 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-// ErrConnectionClosed -.
+// ErrConnectionClosed is returned when attempting to make a remote call on a closed connection.
 var ErrConnectionClosed = errors.New("rmq_rpc client - Client - RemoteCall - Connection closed")
 
 const (
@@ -21,7 +22,8 @@ const (
 	_defaultTimeout  = 2 * time.Second
 )
 
-// Message -.
+// Message represents a RabbitMQ message with all its properties.
+// It can be used to construct messages for publishing or to inspect received messages.
 type Message struct {
 	Queue         string
 	Priority      uint8
@@ -37,7 +39,8 @@ type pendingCall struct {
 	body   []byte
 }
 
-// Client -.
+// Client represents a RabbitMQ RPC client for making remote procedure calls.
+// It manages the connection, handles request-response correlation, and provides timeout support.
 type Client struct {
 	conn           *rmqrpc.Connection
 	serverExchange string
@@ -50,7 +53,16 @@ type Client struct {
 	timeout time.Duration
 }
 
-// New -.
+// New creates a new RabbitMQ RPC client with the specified configuration.
+// The client establishes a connection immediately and starts consuming responses.
+//
+// Parameters:
+//   - url: RabbitMQ connection URL (e.g., "amqp://guest:guest@localhost:5672/")
+//   - serverExchange: exchange name where requests will be published
+//   - clientExchange: exchange name where responses will be received
+//   - opts: optional configuration functions (Timeout, ConnWaitTime, ConnAttempts)
+//
+// Returns an error if the connection cannot be established.
 func New(url, serverExchange, clientExchange string, opts ...Option) (*Client, error) {
 	cfg := rmqrpc.Config{
 		URL:      url,
@@ -110,7 +122,16 @@ func (c *Client) publish(corrID, handler string, request interface{}) error {
 	return nil
 }
 
-// RemoteCall -.
+// RemoteCall performs a synchronous RPC call to a remote handler.
+// It sends a request and waits for a response or timeout.
+//
+// Parameters:
+//   - handler: the name of the remote handler to call
+//   - request: the request payload (will be JSON marshaled)
+//   - response: pointer to store the response (will be JSON unmarshaled)
+//
+// Returns an error if the call times out, the connection is closed,
+// or the remote handler returns an error.
 func (c *Client) RemoteCall(handler string, request, response interface{}) error { //nolint:cyclop // complex func
 	select {
 	case <-c.stop:
@@ -222,12 +243,15 @@ func (c *Client) deleteCall(corrID string) {
 	c.rw.Unlock()
 }
 
-// Notify -.
+// Notify returns a channel that receives connection errors.
+// The channel is closed when a fatal error occurs that requires recreating the client.
 func (c *Client) Notify() <-chan error {
 	return c.error
 }
 
-// Shutdown -.
+// Shutdown gracefully closes the RabbitMQ client connection.
+// It waits for the configured timeout period before closing the underlying connection.
+// Returns an error if the connection close fails.
 func (c *Client) Shutdown() error {
 	select {
 	case <-c.error:

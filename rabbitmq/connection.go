@@ -1,3 +1,4 @@
+// Package rabbitmq provides a simple RabbitMQ connection wrapper with automatic reconnection support.
 package rabbitmq
 
 import (
@@ -8,14 +9,16 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-// Config -.
+// Config holds the configuration for a RabbitMQ connection.
+// It specifies the connection URL, retry parameters, and timing.
 type Config struct {
 	URL      string
 	WaitTime time.Duration
 	Attempts int
 }
 
-// Connection -.
+// Connection represents a RabbitMQ connection with a channel and consumer setup.
+// It manages the AMQP connection lifecycle and provides automatic retry capabilities.
 type Connection struct {
 	ConsumerExchange string
 	Config
@@ -24,7 +27,22 @@ type Connection struct {
 	Delivery   <-chan amqp.Delivery
 }
 
-// New -.
+// New creates a new RabbitMQ connection instance with the specified exchange and configuration.
+// The connection is not established until AttemptConnect is called.
+//
+// Parameters:
+//   - consumerExchange: the name of the exchange to consume from
+//   - cfg: connection configuration including URL, retry attempts, and wait time
+//
+// Example:
+//
+//	cfg := rabbitmq.Config{
+//		URL:      "amqp://guest:guest@localhost:5672/",
+//		WaitTime: 5 * time.Second,
+//		Attempts: 3,
+//	}
+//	conn := rabbitmq.New("my-exchange", cfg)
+//	err := conn.AttemptConnect()
 func New(consumerExchange string, cfg Config) *Connection {
 	conn := &Connection{
 		ConsumerExchange: consumerExchange,
@@ -34,7 +52,17 @@ func New(consumerExchange string, cfg Config) *Connection {
 	return conn
 }
 
-// AttemptConnect -.
+// AttemptConnect tries to establish a connection to RabbitMQ.
+// It will retry the connection based on the configured Attempts and WaitTime.
+// If all attempts fail, it returns the last error encountered.
+//
+// The method will:
+//  1. Establish an AMQP connection
+//  2. Create a channel
+//  3. Declare the exchange as fanout
+//  4. Create an exclusive queue
+//  5. Bind the queue to the exchange
+//  6. Start consuming messages
 func (c *Connection) AttemptConnect() error {
 	var err error
 	for i := c.Attempts; i > 0; i-- {
