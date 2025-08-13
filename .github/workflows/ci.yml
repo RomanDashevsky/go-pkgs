@@ -167,7 +167,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: '1.23.12'
+        go-version: '1.24'
 
     - name: Run Gosec Security Scanner
       uses: securego/gosec@master
@@ -190,7 +190,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: '1.23.12'
+        go-version: '1.24'
 
     - name: Check for outdated dependencies
       run: |
@@ -246,7 +246,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: '1.23.12'
+        go-version: '1.24'
 
     - name: Download dependencies
       run: go mod download
@@ -292,7 +292,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: '1.23.12'
+        go-version: '1.24'
 
     - name: Generate changelog
       id: changelog
