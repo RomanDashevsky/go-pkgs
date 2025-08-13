@@ -60,6 +60,90 @@ if err != nil {
 }
 ```
 
+### gRPC Server
+A gRPC server with graceful shutdown and configurable options.
+```go
+import "github.com/rdashevsky/go-pkgs/grpcserver"
+
+server := grpcserver.New(
+    grpcserver.Port(":50051"),
+    grpcserver.ReadTimeout(30 * time.Second),
+)
+```
+
+### RabbitMQ
+RabbitMQ RPC client and server implementation with automatic reconnection.
+```go
+import "github.com/rdashevsky/go-pkgs/rabbitmq/client"
+
+// RPC Client
+client, err := client.New(
+    "amqp://guest:guest@localhost:5672/",
+    "server-exchange",
+    "client-exchange",
+)
+
+var response MyResponse
+err = client.RemoteCall("handler-name", request, &response)
+```
+
+```go
+import "github.com/rdashevsky/go-pkgs/rabbitmq/server"
+
+// RPC Server
+router := map[string]server.CallHandler{
+    "greet": func(d *amqp.Delivery) (interface{}, error) {
+        return "Hello World", nil
+    },
+}
+
+server, err := server.New(
+    "amqp://guest:guest@localhost:5672/",
+    "server-exchange",
+    router,
+    logger,
+)
+server.Start()
+```
+
+### Kafka
+Kafka RPC client and server implementation using franz-go with producer/consumer support.
+```go
+import (
+    "github.com/rdashevsky/go-pkgs/kafka"
+    "github.com/rdashevsky/go-pkgs/kafka/client"
+)
+
+// Kafka RPC Client
+cfg := kafka.Config{
+    Brokers:  []string{"localhost:9092"},
+    ClientID: "my-app",
+    GroupID:  "my-group",
+}
+
+client, err := client.New(cfg, "requests", "replies")
+
+var response MyResponse
+err = client.RemoteCall(ctx, "handler-name", request, &response)
+```
+
+```go
+import (
+    "github.com/rdashevsky/go-pkgs/kafka/server"
+    "github.com/twmb/franz-go/pkg/kgo"
+)
+
+// Kafka RPC Server
+router := map[string]server.CallHandler{
+    "greet": func(record *kgo.Record) (interface{}, error) {
+        return "Hello World", nil
+    },
+}
+
+server, err := server.New(cfg, "requests", router, logger)
+server.Start()
+```
+
 ## Usage
 
 1. Add the module to your `go.mod`:
@@ -87,7 +171,7 @@ import (
 ## Development
 
 ### Prerequisites
-- Go 1.21 or later
+- Go 1.24 or later
 - Make
 - Docker (for integration tests)
 
