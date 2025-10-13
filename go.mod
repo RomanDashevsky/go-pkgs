@@ -1,6 +1,6 @@
 module github.com/rdashevsky/go-pkgs
 
-go 1.24
+go 1.24.0
 
 toolchain go1.24.6
 
@@ -15,7 +15,7 @@ require (
 	github.com/redis/go-redis/v9 v9.12.0
 	github.com/rs/zerolog v1.34.0
 	github.com/twmb/franz-go v1.19.5
-	google.golang.org/grpc v1.74.2
+	google.golang.org/grpc v1.76.0
 )
 
 require (
